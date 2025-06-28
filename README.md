@@ -1,73 +1,162 @@
-# Welcome to your Lovable project
+# 🌟 WebStory Hub - React + TypeScript + Supabase
 
-## Project info
+A modern, responsive web application for creating, managing, and sharing stories with a beautiful admin panel.
 
-**URL**: https://lovable.dev/projects/dfcbb85f-16d9-4d7a-ac38-77b3ae8bb1f4
+## 🚀 Features
 
-## How can I edit this code?
+### Public Features
+- **Story Display**: Beautiful story cards with cover images
+- **Category Filtering**: Browse stories by categories
+- **Search Functionality**: Find stories by title or content
+- **Responsive Design**: Mobile-friendly interface
+- **Reading Time**: Estimated reading time for each story
 
-There are several ways of editing your application.
+### Admin Panel
+- **Dashboard**: Analytics and overview
+- **Story Management**: Create, edit, delete stories
+- **Category Management**: Manage story categories
+- **User Authentication**: Secure admin login
+- **Real-time Updates**: Live data synchronization
 
-**Use Lovable**
+## 🛠️ Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/dfcbb85f-16d9-4d7a-ac38-77b3ae8bb1f4) and start prompting.
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI Framework**: shadcn/ui + Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Auth + Real-time)
+- **State Management**: React Query (TanStack Query)
+- **Styling**: Tailwind CSS + CSS Modules
+- **Icons**: Lucide React
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📦 Installation
 
-**Use your preferred IDE**
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Setup Steps
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone the repository**
+```bash
+git clone <your-repo-url>
+cd web-spark-narrator-ui
+```
 
-Follow these steps:
+2. **Install dependencies**
+```bash
+npm install
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Environment Setup**
+Create `.env` file in root directory:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. **Database Setup**
+- Go to Supabase Dashboard
+- Run `supabase-setup.sql` in SQL Editor
+- Create admin user: `nikhil@webstory.in` / `Nikhil@1305`
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+5. **Start Development Server**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🌐 URLs
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Public Site**: http://localhost:8080
+- **Admin Panel**: http://localhost:8080/admin
+- **Admin Login**: nikhil@webstory.in / Nikhil@1305
 
-**Use GitHub Codespaces**
+## 📁 Project Structure
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # shadcn/ui components
+│   ├── admin-layout.tsx
+│   └── theme-provider.tsx
+├── hooks/              # Custom React hooks
+│   ├── use-categories.ts
+│   ├── use-dashboard.ts
+│   └── use-stories.ts
+├── lib/                # Utility functions
+│   ├── api.ts          # API service
+│   ├── supabase.ts     # Supabase client
+│   └── utils.ts        # Helper functions
+├── pages/              # Page components
+│   ├── Index.tsx       # Home page
+│   ├── StoryPage.tsx   # Story detail page
+│   ├── AdminLogin.tsx  # Admin login
+│   ├── AdminDashboard.tsx
+│   ├── StoryEditor.tsx
+│   └── CategoryManagement.tsx
+└── main.tsx           # App entry point
+```
 
-## What technologies are used for this project?
+## 🔧 Development
 
-This project is built with:
+### Available Scripts
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
 
-## How can I deploy this project?
+### Database Schema
 
-Simply open [Lovable](https://lovable.dev/projects/dfcbb85f-16d9-4d7a-ac38-77b3ae8bb1f4) and click on Share -> Publish.
+**Tables:**
+- `categories`: Story categories
+- `stories`: Story content and metadata
+- `users`: Admin users
 
-## Can I connect a custom domain to my Lovable project?
+**Key Features:**
+- UUID primary keys
+- Automatic timestamps
+- Row Level Security (RLS)
+- Real-time subscriptions
 
-Yes, you can!
+## 🔒 Security
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- Environment variables excluded from Git
+- Row Level Security enabled
+- Admin authentication required
+- Input validation and sanitization
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🚀 Deployment
+
+### Vercel (Recommended)
+1. Connect GitHub repository
+2. Set environment variables
+3. Deploy automatically
+
+### Netlify
+1. Build command: `npm run build`
+2. Publish directory: `dist`
+3. Set environment variables
+
+## 📝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Test thoroughly
+5. Submit pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🤝 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Contact: nikhil@webstory.in
+
+---
+
+**Built with ❤️ using React, TypeScript, and Supabase**

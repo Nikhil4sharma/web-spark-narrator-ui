@@ -1,235 +1,268 @@
-
-import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Eye, Share } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Eye, Clock, User, Calendar, Tag, Share2, Heart, MessageCircle } from "lucide-react";
+import { useStory } from "@/hooks/use-stories";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const StoryPage = () => {
-  const { slug } = useParams();
-  const [currentPage, setCurrentPage] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  
-  // Mock story data
-  const story = {
-    id: "1",
-    title: "Amazing Travel Adventure",
-    slug: "amazing-travel-adventure",
-    category: "Travel",
-    coverImage: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=600&fit=crop",
-    pages: [
-      {
-        id: "1",
-        backgroundImage: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=600&fit=crop",
-        layers: [
-          {
-            id: "1",
-            type: "text",
-            content: "Welcome to Paradise",
-            style: {
-              fontSize: "2xl",
-              color: "white",
-              position: "bottom",
-              textAlign: "center",
-              fontWeight: "bold"
-            }
-          }
-        ]
-      },
-      {
-        id: "2",
-        backgroundImage: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=600&fit=crop",
-        layers: [
-          {
-            id: "2",
-            type: "text",
-            content: "Discover Hidden Gems",
-            style: {
-              fontSize: "xl",
-              color: "white",
-              position: "center",
-              textAlign: "center",
-              fontWeight: "semibold"
-            }
-          }
-        ]
-      },
-      {
-        id: "3",
-        backgroundImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop",
-        layers: [
-          {
-            id: "3",
-            type: "text",
-            content: "Adventure Awaits",
-            style: {
-              fontSize: "lg",
-              color: "white",
-              position: "top",
-              textAlign: "left",
-              fontWeight: "medium"
-            }
-          }
-        ]
-      }
-    ],
-    views: 1250,
-    duration: 5000
-  };
+  const { slug } = useParams<{ slug: string }>();
+  const { data: story, isLoading, error } = useStory(slug || "");
 
-  // Auto-advance pages
-  useEffect(() => {
-    if (!isAutoPlaying) return;
-    
-    const timer = setInterval(() => {
-      setCurrentPage(prev => 
-        prev >= story.pages.length - 1 ? 0 : prev + 1
-      );
-    }, story.duration);
-
-    return () => clearInterval(timer);
-  }, [currentPage, isAutoPlaying, story.duration, story.pages.length]);
-
-  const nextPage = () => {
-    setCurrentPage(prev => 
-      prev >= story.pages.length - 1 ? 0 : prev + 1
-    );
-  };
-
-  const prevPage = () => {
-    setCurrentPage(prev => 
-      prev <= 0 ? story.pages.length - 1 : prev - 1
-    );
-  };
-
-  const toggleAutoPlay = () => {
-    setIsAutoPlaying(!isAutoPlaying);
-  };
-
-  const currentStoryPage = story.pages[currentPage];
-
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      {/* Story Container */}
-      <div className="relative w-full max-w-sm h-screen bg-black overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${currentStoryPage.backgroundImage})` }}
-        >
-          <div className="absolute inset-0 bg-black/20" />
-        </div>
-
-        {/* Progress Bars */}
-        <div className="absolute top-4 left-4 right-4 z-20">
-          <div className="flex space-x-1">
-            {story.pages.map((_, index) => (
-              <div
-                key={index}
-                className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden"
-              >
-                <div
-                  className={`h-full bg-white transition-all duration-300 ${
-                    index < currentPage ? 'w-full' : 
-                    index === currentPage ? 'w-1/2' : 'w-0'
-                  }`}
-                />
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header Skeleton */}
+        <header className="border-b bg-card sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-8 w-32" />
+              <div className="flex items-center space-x-2">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-16" />
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Header */}
-        <div className="absolute top-12 left-4 right-4 z-20 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="text-white hover:bg-white/20"
-          >
-            <Link to="/">
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Back
-            </Link>
-          </Button>
-          
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center text-white text-sm">
-              <Eye className="w-4 h-4 mr-1" />
-              {story.views.toLocaleString()}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/20"
-            >
-              <Share className="w-4 h-4" />
-            </Button>
           </div>
-        </div>
+        </header>
 
-        {/* Story Content */}
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
-          {currentStoryPage.layers.map((layer) => {
-            if (layer.type === 'text') {
-              const positionClasses = {
-                top: 'top-24',
-                center: 'top-1/2 -translate-y-1/2',
-                bottom: 'bottom-24'
-              };
-              
-              const alignClasses = {
-                left: 'text-left',
-                center: 'text-center',
-                right: 'text-right'
-              };
-
-              return (
-                <div
-                  key={layer.id}
-                  className={`absolute left-4 right-4 px-4 ${positionClasses[layer.style.position]} ${alignClasses[layer.style.textAlign]}`}
-                >
-                  <h2
-                    className={`text-${layer.style.fontSize} font-${layer.style.fontWeight} text-${layer.style.color} drop-shadow-lg`}
-                  >
-                    {layer.content}
-                  </h2>
-                </div>
-              );
-            }
-            return null;
-          })}
-        </div>
-
-        {/* Navigation Areas */}
-        <button
-          className="absolute left-0 top-0 w-1/3 h-full z-30 focus:outline-none"
-          onClick={prevPage}
-        />
-        <button
-          className="absolute right-0 top-0 w-1/3 h-full z-30 focus:outline-none"
-          onClick={nextPage}
-        />
-        <button
-          className="absolute left-1/3 top-0 w-1/3 h-full z-30 focus:outline-none"
-          onClick={toggleAutoPlay}
-        />
-
-        {/* Story Info */}
-        <div className="absolute bottom-4 left-4 right-4 z-20">
-          <div className="bg-black/50 backdrop-blur-sm rounded-lg p-4 text-white">
-            <h1 className="text-lg font-bold mb-1">{story.title}</h1>
-            <p className="text-sm text-white/80">{story.category}</p>
-            <div className="mt-2 text-xs text-white/60">
-              {isAutoPlaying ? 'Tap to pause' : 'Tap to play'} • Page {currentPage + 1} of {story.pages.length}
+        {/* Content Skeleton */}
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8">
+              <Skeleton className="h-12 w-3/4 mb-4" />
+              <div className="flex items-center space-x-4 mb-6">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-16" />
+              </div>
+              <Skeleton className="aspect-[16/9] w-full mb-6" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-4/5" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
             </div>
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Desktop Instructions */}
-      <div className="hidden lg:block absolute bottom-8 left-8 text-white/60 text-sm">
-        <p>Use arrow keys or click to navigate</p>
-        <p>Spacebar to pause/play</p>
+  if (error || !story) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Story Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            The story you're looking for doesn't exist or has been removed.
+          </p>
+          <Button asChild>
+            <Link to="/">Back to Home</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b bg-card sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
+              WebStory Hub
+            </Link>
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <Button variant="outline" asChild>
+                <Link to="/admin/login">Admin</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Story Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Back Button */}
+          <div className="mb-6">
+            <Button variant="ghost" asChild>
+              <Link to="/" className="flex items-center">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Stories
+              </Link>
+            </Button>
+          </div>
+
+          {/* Story Header */}
+          <div className="mb-8">
+            <div className="flex items-center space-x-2 mb-4">
+              <Badge variant="outline">{story.category}</Badge>
+              <Badge variant="secondary">{story.status}</Badge>
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+              {story.title}
+            </h1>
+
+            {/* Story Meta */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-6">
+              <div className="flex items-center">
+                <User className="w-4 h-4 mr-2" />
+                {story.author}
+              </div>
+              <div className="flex items-center">
+                <Calendar className="w-4 h-4 mr-2" />
+                {new Date(story.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </div>
+              <div className="flex items-center">
+                <Clock className="w-4 h-4 mr-2" />
+                {story.readingTime} min read
+              </div>
+              <div className="flex items-center">
+                <Eye className="w-4 h-4 mr-2" />
+                {story.views.toLocaleString()} views
+              </div>
+            </div>
+
+            {/* Cover Image */}
+            {story.coverImage && (
+              <div className="aspect-[16/9] overflow-hidden rounded-lg mb-8">
+                <img
+                  src={story.coverImage}
+                  alt={story.title}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            )}
+
+            {/* Tags */}
+            {story.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8">
+                {story.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="flex items-center">
+                    <Tag className="w-3 h-3 mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Story Content */}
+          <Card className="mb-8">
+            <CardContent className="p-8">
+              <div className="prose prose-lg max-w-none dark:prose-invert">
+                {/* Convert markdown-like content to HTML */}
+                {story.content.split('\n').map((paragraph, index) => {
+                  if (paragraph.trim() === '') return <br key={index} />;
+                  
+                  // Simple markdown parsing
+                  let processedParagraph = paragraph;
+                  
+                  // Bold text
+                  processedParagraph = processedParagraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                  
+                  // Italic text
+                  processedParagraph = processedParagraph.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                  
+                  // Links
+                  processedParagraph = processedParagraph.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">$1</a>');
+                  
+                  // Headers
+                  if (paragraph.startsWith('## ')) {
+                    return <h2 key={index} className="text-2xl font-bold mt-8 mb-4">{paragraph.substring(3)}</h2>;
+                  }
+                  if (paragraph.startsWith('# ')) {
+                    return <h1 key={index} className="text-3xl font-bold mt-8 mb-4">{paragraph.substring(2)}</h1>;
+                  }
+                  
+                  return (
+                    <p key={index} className="mb-4 leading-relaxed" 
+                       dangerouslySetInnerHTML={{ __html: processedParagraph }} />
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Story Footer */}
+          <div className="border-t pt-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <Button variant="outline" size="sm">
+                  <Heart className="w-4 h-4 mr-2" />
+                  Like
+                </Button>
+                <Button variant="outline" size="sm">
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Comment
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Last updated: {new Date(story.updatedAt).toLocaleDateString()}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Author Info */}
+            <div className="mt-8 p-6 bg-muted/50 rounded-lg">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">{story.author}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Story creator and content writer
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Related Stories Suggestion */}
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">More Stories</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* This would be populated with related stories */}
+              <Card className="group overflow-hidden hover:shadow-lg transition-shadow">
+                <Link to="/">
+                  <div className="aspect-[3/4] overflow-hidden">
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <p className="text-muted-foreground">More stories coming soon...</p>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold group-hover:text-primary transition-colors">
+                      Explore More Content
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Discover other amazing stories on WebStory Hub
+                    </p>
+                  </CardContent>
+                </Link>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

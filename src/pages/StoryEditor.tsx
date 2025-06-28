@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Save, Image, Video, Trash2 } from "lucide-react";
+import { Plus, Eye, Save, Image, Video, Trash2, ArrowLeft, Loader2, Tag, Calendar, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useStory, useCreateStory, useUpdateStory } from "@/hooks/use-stories";
+import { useCategories } from "@/hooks/use-categories";
+import { CreateStoryRequest } from "@/lib/api";
 
 const StoryEditor = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isEditing = !!id;
+
   const [currentStep, setCurrentStep] = useState("basic");
   const [storyData, setStoryData] = useState({
     title: "",
@@ -44,6 +51,95 @@ const StoryEditor = () => {
     { value: "flip", label: "Flip" },
   ];
 
+  const [formData, setFormData] = useState<CreateStoryRequest>({
+    title: "",
+    content: "",
+    category: "",
+    coverImage: "",
+    tags: [],
+    status: "draft",
+  });
+
+  const [tagInput, setTagInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch story data if editing
+  const { data: story, isLoading: storyLoading } = useStory(id || "");
+  const { data: categories = [] } = useCategories();
+  const createStoryMutation = useCreateStory();
+  const updateStoryMutation = useUpdateStory();
+
+  // Load story data when editing
+  useEffect(() => {
+    if (story && isEditing) {
+      setFormData({
+        title: story.title,
+        content: story.content,
+        category: story.category,
+        coverImage: story.coverImage,
+        tags: story.tags,
+        status: story.status,
+      });
+    }
+  }, [story, isEditing]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (isEditing && story) {
+        await updateStoryMutation.mutateAsync({
+          id: story.id,
+          ...formData,
+        });
+        toast({
+          title: "Story updated",
+          description: `"${formData.title}" has been updated successfully.`,
+        });
+      } else {
+        await createStoryMutation.mutateAsync(formData);
+        toast({
+          title: "Story created",
+          description: `"${formData.title}" has been created successfully.`,
+        });
+      }
+      navigate("/admin/dashboard");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${isEditing ? 'update' : 'create'} story. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
+      setFormData({
+        ...formData,
+        tags: [...formData.tags, tagInput.trim()],
+      });
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setFormData({
+      ...formData,
+      tags: formData.tags.filter(tag => tag !== tagToRemove),
+    });
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
   const addPage = () => {
     const newPage = {
       id: Date.now().toString(),
@@ -67,277 +163,245 @@ const StoryEditor = () => {
     }));
   };
 
-  const handleSave = (isDraft = true) => {
-    toast({
-      title: isDraft ? "Draft Saved" : "Story Published",
-      description: `Your story has been ${isDraft ? "saved as draft" : "published"} successfully.`,
-    });
-  };
+  if (storyLoading && isEditing) {
+    return (
+      <AdminLayout title="Loading Story...">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <Skeleton className="h-32" />
+              <Skeleton className="h-64" />
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+            </div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <AdminLayout title="Story Editor">
-      <div className="max-w-6xl mx-auto">
-        <Tabs value={currentStep} onValueChange={setCurrentStep} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="basic">Step 1: Basic Info</TabsTrigger>
-            <TabsTrigger value="media">Step 2: Media & Category</TabsTrigger>
-            <TabsTrigger value="pages">Step 3: Page Editor</TabsTrigger>
-          </TabsList>
-
-          {/* Step 1: Basic Information */}
-          <TabsContent value="basic" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Story Title</Label>
-                    <Input
-                      id="title"
-                      placeholder="Enter story title"
-                      value={storyData.title}
-                      onChange={(e) => setStoryData({ ...storyData, title: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="slug">URL Slug</Label>
-                    <Input
-                      id="slug"
-                      placeholder="story-url-slug"
-                      value={storyData.slug}
-                      onChange={(e) => setStoryData({ ...storyData, slug: e.target.value })}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="meta">Meta Description (SEO)</Label>
-                  <Textarea
-                    id="meta"
-                    placeholder="Brief description for search engines"
-                    value={storyData.metaDescription}
-                    onChange={(e) => setStoryData({ ...storyData, metaDescription: e.target.value })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Step 2: Media & Category */}
-          <TabsContent value="media" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Cover Image & Category</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <Label>Cover Image</Label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                      <Image className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-sm text-gray-600">Click to upload cover image</p>
-                      <p className="text-xs text-gray-400 mt-2">Recommended: 720x1280px</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select value={storyData.category} onValueChange={(value) => setStoryData({ ...storyData, category: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="travel">Travel</SelectItem>
-                          <SelectItem value="food">Food</SelectItem>
-                          <SelectItem value="technology">Technology</SelectItem>
-                          <SelectItem value="health">Health</SelectItem>
-                          <SelectItem value="lifestyle">Lifestyle</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="duration">Story Duration</Label>
-                      <Select value={storyData.duration} onValueChange={(value) => setStoryData({ ...storyData, duration: value })}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="auto">Auto</SelectItem>
-                          <SelectItem value="5s">5 seconds</SelectItem>
-                          <SelectItem value="10s">10 seconds</SelectItem>
-                          <SelectItem value="15s">15 seconds</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="animation">Animation Type</Label>
-                      <Select value={storyData.animationType} onValueChange={(value) => setStoryData({ ...storyData, animationType: value })}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {animationTypes.map((animation) => (
-                            <SelectItem key={animation.value} value={animation.value}>
-                              {animation.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Step 3: Page Editor */}
-          <TabsContent value="pages" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Story Pages</h3>
-              <Button onClick={addPage}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Page
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Pages List */}
-              <div className="space-y-4">
-                <h4 className="font-medium">Pages ({pages.length})</h4>
-                {pages.map((page, index) => (
-                  <Card key={page.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Page {index + 1}</span>
-                        <Badge variant="secondary">{page.layers.length} layers</Badge>
-                      </div>
-                      <div className="mt-2 flex space-x-2">
-                        <Button size="sm" variant="outline" onClick={() => addLayer(page.id, "text")}>
-                          <Plus className="w-3 h-3 mr-1" />
-                          Text
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => addLayer(page.id, "image")}>
-                          <Image className="w-3 h-3 mr-1" />
-                          Image
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => addLayer(page.id, "video")}>
-                          <Video className="w-3 h-3 mr-1" />
-                          Video
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Page Editor */}
-              <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Page Preview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-lg relative overflow-hidden">
-                      <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                        <div className="text-center">
-                          <Eye className="w-8 h-8 mx-auto mb-2" />
-                          <p>Page Preview</p>
-                          <p className="text-sm">Add layers to see content</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Text Formatting Options */}
-                <Card className="mt-4">
-                  <CardHeader>
-                    <CardTitle>Text Formatting</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>Font Family</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select font" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {googleFonts.map((font) => (
-                              <SelectItem key={font} value={font}>
-                                {font}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Font Size</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Size" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="sm">Small</SelectItem>
-                            <SelectItem value="md">Medium</SelectItem>
-                            <SelectItem value="lg">Large</SelectItem>
-                            <SelectItem value="xl">Extra Large</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Alignment</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Align" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="left">Left</SelectItem>
-                            <SelectItem value="center">Center</SelectItem>
-                            <SelectItem value="right">Right</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Text Color</Label>
-                        <div className="flex space-x-2">
-                          <div className="w-8 h-8 bg-black rounded border cursor-pointer"></div>
-                          <div className="w-8 h-8 bg-white border rounded cursor-pointer"></div>
-                          <div className="w-8 h-8 bg-blue-500 rounded cursor-pointer"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        {/* Save Actions */}
-        <div className="flex justify-between items-center pt-6 border-t">
-          <Button variant="outline">
-            <Eye className="w-4 h-4 mr-2" />
-            Preview
-          </Button>
-          <div className="space-x-4">
-            <Button variant="outline" onClick={() => handleSave(true)}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Draft
+    <AdminLayout title={isEditing ? "Edit Story" : "Create New Story"}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/dashboard")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
             </Button>
-            <Button onClick={() => handleSave(false)}>
-              Publish Story
+            <div>
+              <h2 className="text-2xl font-bold">{isEditing ? "Edit Story" : "Create New Story"}</h2>
+              <p className="text-muted-foreground">
+                {isEditing ? "Update your story content and settings" : "Write and publish your next great story"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm">
+              <Eye className="w-4 h-4 mr-2" />
+              Preview
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              disabled={isLoading || createStoryMutation.isPending || updateStoryMutation.isPending}
+            >
+              {(isLoading || createStoryMutation.isPending || updateStoryMutation.isPending) ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {isEditing ? "Update Story" : "Create Story"}
             </Button>
           </div>
         </div>
+
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Title */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Story Title</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Input
+                  placeholder="Enter your story title..."
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="text-lg font-medium"
+                  required
+                />
+              </CardContent>
+            </Card>
+
+            {/* Content */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Story Content</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder="Write your story content here... Use markdown for formatting."
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  className="min-h-[400px] resize-none"
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Supports markdown formatting. Use **bold**, *italic*, [links](url), etc.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value: "draft" | "published") => 
+                    setFormData({ ...formData, status: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+
+            {/* Category */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Category</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+
+            {/* Cover Image */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Image className="w-4 h-4 mr-2" />
+                  Cover Image
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Input
+                  placeholder="Enter image URL..."
+                  value={formData.coverImage}
+                  onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                />
+                {formData.coverImage && (
+                  <div className="aspect-[3/4] overflow-hidden rounded-md border">
+                    <img
+                      src={formData.coverImage}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Tags */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Tag className="w-4 h-4 mr-2" />
+                  Tags
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Add a tag..."
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                  />
+                  <Button type="button" variant="outline" onClick={handleAddTag}>
+                    Add
+                  </Button>
+                </div>
+                {formData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="cursor-pointer">
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Story Info */}
+            {isEditing && story && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Story Info</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center text-sm">
+                    <User className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <span className="text-muted-foreground">Author:</span>
+                    <span className="ml-2">{story.author}</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <span className="text-muted-foreground">Created:</span>
+                    <span className="ml-2">{new Date(story.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <Eye className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <span className="text-muted-foreground">Views:</span>
+                    <span className="ml-2">{story.views.toLocaleString()}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </form>
       </div>
     </AdminLayout>
   );
