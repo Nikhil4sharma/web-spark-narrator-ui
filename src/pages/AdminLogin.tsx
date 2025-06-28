@@ -152,18 +152,7 @@ const AdminLogin = () => {
             </form>
 
             {/* Admin Credentials */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">
-                <strong>Admin Credentials:</strong>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Email: nikhil@webstory.in<br />
-                Password: Nikhil@1305
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                (Custom admin account for WebStory Hub)
-              </p>
-            </div>
+            {/* Removed for production security */}
 
             {/* Footer */}
             <div className="mt-6 text-center">

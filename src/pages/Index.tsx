@@ -49,9 +49,6 @@ const Index = () => {
             </Link>
             <div className="flex items-center space-x-2">
               <ThemeToggle />
-              <Button variant="outline" asChild>
-                <Link to="/admin/login">Admin</Link>
-              </Button>
             </div>
           </div>
         </div>
