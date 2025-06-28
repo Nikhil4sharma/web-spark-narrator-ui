@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Eye, Clock, User, Calendar, Tag, Share2, Heart, MessageCircle } from "lucide-react";
 import { useStory } from "@/hooks/use-stories";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RelatedStories } from "@/components/related-stories";
 
 const StoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -238,29 +239,10 @@ const StoryPage = () => {
             </div>
           </div>
 
-          {/* Related Stories Suggestion */}
+          {/* Related Stories */}
           <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">More Stories</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* This would be populated with related stories */}
-              <Card className="group overflow-hidden hover:shadow-lg transition-shadow">
-                <Link to="/">
-                  <div className="aspect-[3/4] overflow-hidden">
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <p className="text-muted-foreground">More stories coming soon...</p>
-                    </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold group-hover:text-primary transition-colors">
-                      Explore More Content
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Discover other amazing stories on WebStory Hub
-                    </p>
-                  </CardContent>
-                </Link>
-              </Card>
-            </div>
+            <h2 className="text-2xl font-bold mb-6">Related Stories</h2>
+            <RelatedStories currentStoryId={story.id} category={story.category} />
           </div>
         </div>
       </div>
