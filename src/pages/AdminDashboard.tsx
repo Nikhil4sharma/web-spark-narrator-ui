@@ -73,65 +73,70 @@ const AdminDashboard = () => {
             Array.from({ length: 4 }).map((_, i) => <StatsSkeleton key={i} />)
           ) : (
             <>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Total Stories
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalStories || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.publishedStories || 0} published, {stats?.draftStories || 0} drafts
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-                    <Eye className="w-4 h-4 mr-2" />
-                    Total Views
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{(stats?.totalViews || 0).toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.monthlyViews || 0} this month
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Published
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{stats?.publishedStories || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.totalStories ? Math.round((stats.publishedStories / stats.totalStories) * 100) : 0}% of total
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Categories
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{stats?.totalCategories || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Active categories
-                  </p>
-                </CardContent>
-              </Card>
+              <Link to="/admin/stories" className="group">
+                <Card className="cursor-pointer group-hover:shadow-lg transition">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Total Stories
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.totalStories || 0}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {stats?.publishedStories || 0} published, {stats?.draftStories || 0} drafts
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/admin/stories" className="group">
+                <Card className="cursor-pointer group-hover:shadow-lg transition">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                      <Eye className="w-4 h-4 mr-2" />
+                      Total Views
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{(stats?.totalViews || 0).toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {stats?.monthlyViews || 0} this month
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/admin/stories?status=published" className="group">
+                <Card className="cursor-pointer group-hover:shadow-lg transition">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Published
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">{stats?.publishedStories || 0}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {stats?.totalStories ? Math.round((stats.publishedStories / stats.totalStories) * 100) : 0}% of total
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/admin/categories" className="group">
+                <Card className="cursor-pointer group-hover:shadow-lg transition">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Categories
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">{stats?.totalCategories || 0}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Active categories
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             </>
           )}
         </div>
@@ -249,7 +254,6 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
-      <Footer />
     </AdminLayout>
   );
 };
