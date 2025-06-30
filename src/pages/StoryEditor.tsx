@@ -35,7 +35,7 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
   const page = pages[selectedPageIdx];
   if (!page) return null;
   return (
-    <div className="relative w-[320px] h-[570px] bg-black overflow-hidden flex flex-col items-center justify-center mx-auto overflow-y-auto" style={{WebkitOverflowScrolling: 'touch'}}>
+    <div className="relative w-full max-w-xs h-[70vh] min-h-[400px] bg-black overflow-y-auto flex flex-col items-center justify-center mx-auto" style={{WebkitOverflowScrolling: 'touch'}}>
       {/* Progress Bar */}
       <div className="absolute top-0 left-0 w-full flex gap-1 px-6 pt-4 z-30">
         {pages.map((_, idx) => (
@@ -72,7 +72,23 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
       {page.elements.map((el: any) => {
         if (el.type === 'text') {
           return (
-            <div key={el.id} className="story-text-card" style={{zIndex: 3, position: 'absolute', left: 0, bottom: page.cta && page.cta.text ? '72px' : '0', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#fff', textAlign: 'center', padding: '1.25rem 1.5rem', fontWeight: 500, textShadow: '0 2px 8px #0008', maxHeight: '50%', overflowY: 'auto', WebkitOverflowScrolling: 'touch'}}>
+            <div key={el.id} className="story-text-card" style={{
+              zIndex: 3,
+              position: 'relative',
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              color: '#fff',
+              textAlign: 'center',
+              padding: '1rem 1.25rem',
+              fontWeight: 500,
+              textShadow: '0 2px 8px #0008',
+              maxHeight: '40vh',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              marginBottom: page.cta && page.cta.text ? '72px' : '0',
+            }}>
               {/* Glassmorphism Blur Only Behind Text */}
               <div style={{
                 position: 'absolute',
@@ -134,7 +150,8 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
             left: '50%',
             bottom: '24px',
             transform: 'translateX(-50%)',
-            width: '80%',
+            width: '91.666%', // w-11/12
+            maxWidth: '320px',
             background: page.cta.bgColor || '#e11d48',
             color: page.cta.textColor || '#fff',
             borderRadius: '999px',
