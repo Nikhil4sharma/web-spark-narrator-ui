@@ -67,46 +67,91 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
         height: '40%',
         background: 'linear-gradient(to top, rgba(0,0,0,0.10) 80%, transparent 100%)',
         zIndex: 2,
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)'
       }}></div>
       {/* Text Card (bottom) */}
       {page.elements.map((el: any) => {
         if (el.type === 'text') {
           return (
-            <div key={el.id} className="story-text-card" style={{zIndex: 3, position: 'absolute', left: 0, bottom: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#fff', textAlign: 'center', padding: '1.25rem 1.5rem', fontWeight: 500, textShadow: '0 2px 8px #0008'}}>
-              {el.blocks.map((block: any) => {
-                const Tag = block.tag;
-                return (
-                  <Tag
-                    key={block.id}
-                    style={{
-                      textAlign: block.style?.align || 'center',
-                      color: block.style?.color || '#fff',
-                      fontWeight: block.style?.fontWeight || 'bold',
-                      fontStyle: block.style?.fontStyle || 'normal',
-                      fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
-                      fontSize: block.style?.fontSize || (block.tag === 'h1' ? '2em' : block.tag === 'h2' ? '1.5em' : block.tag === 'h3' ? '1.2em' : '1em'),
-                      letterSpacing: block.style?.letterSpacing || '0px',
-                      lineHeight: block.style?.lineHeight || '1.2',
-                      margin: 0,
-                      padding: 0,
-                      textShadow: '0 2px 8px #0008',
-                    }}
-                  >
-                    {block.value}
-                  </Tag>
-                );
-              })}
-              {/* Image Credit (optional) */}
-              {page.backgroundCredit && (
-                <div className="text-xs mt-2 opacity-80">Image Credit: {page.backgroundCredit}</div>
-              )}
+            <div key={el.id} className="story-text-card" style={{zIndex: 3, position: 'absolute', left: 0, bottom: page.cta && page.cta.text ? '72px' : '0', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#fff', textAlign: 'center', padding: '1.25rem 1.5rem', fontWeight: 500, textShadow: '0 2px 8px #0008'}}>
+              {/* Glassmorphism Blur Only Behind Text */}
+              <div style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: '100%',
+                height: '100%',
+                background: 'rgba(20,20,20,0.35)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                borderTopLeftRadius: '18px',
+                borderTopRightRadius: '18px',
+                borderBottomLeftRadius: '0',
+                borderBottomRightRadius: '0',
+                zIndex: 0,
+              }} />
+              <div style={{position: 'relative', zIndex: 1, width: '100%'}}>
+                {el.blocks.map((block: any) => {
+                  const Tag = block.tag;
+                  return (
+                    <Tag
+                      key={block.id}
+                      style={{
+                        textAlign: block.style?.align || 'center',
+                        color: block.style?.color || '#fff',
+                        fontWeight: block.style?.fontWeight || 'bold',
+                        fontStyle: block.style?.fontStyle || 'normal',
+                        fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+                        fontSize: block.style?.fontSize || (block.tag === 'h1' ? '2em' : block.tag === 'h2' ? '1.5em' : block.tag === 'h3' ? '1.2em' : '1em'),
+                        letterSpacing: block.style?.letterSpacing || '0px',
+                        lineHeight: block.style?.lineHeight || '1.2',
+                        margin: 0,
+                        padding: 0,
+                        textShadow: '0 2px 8px #0008',
+                      }}
+                    >
+                      {block.value}
+                    </Tag>
+                  );
+                })}
+                {/* Image Credit (optional) */}
+                {page.backgroundCredit && (
+                  <div className="text-xs mt-2 opacity-80">Image Credit: {page.backgroundCredit}</div>
+                )}
+              </div>
             </div>
           );
         }
         return null;
       })}
+      {/* CTA Button at the very bottom, with margin */}
+      {page.cta && page.cta.text && page.cta.url && (
+        <a
+          href={page.cta.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            position: 'absolute',
+            left: '50%',
+            bottom: '24px',
+            transform: 'translateX(-50%)',
+            width: '80%',
+            background: page.cta.bgColor || '#e11d48',
+            color: page.cta.textColor || '#fff',
+            borderRadius: '999px',
+            padding: '0.75rem 1.5rem',
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            boxShadow: '0 4px 24px 0 rgba(0,0,0,0.12)',
+            textAlign: 'center',
+            zIndex: 10,
+            textDecoration: 'none',
+            letterSpacing: '0.5px',
+            transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
+          }}
+        >
+          {page.cta.text}
+        </a>
+      )}
       {/* Page indicator & navigation (preview mode) */}
       {mode === 'preview' && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
@@ -170,21 +215,21 @@ const StoryEditor = () => {
       setMeta({
         title: story.title,
         slug: story.slug,
-        description: story.description,
-        publisher: story.publisher,
-        publisherName: story.publisher_name,
-        publisherLogo: story.publisher_logo_url,
-        publisherLogoAlt: story.publisher_logo_alt,
-        posterPortrait: story.poster_portrait_url,
-        posterAlt: story.poster_alt,
+        description: '',
+        publisher: '',
+        publisherName: story.publisherName,
+        publisherLogo: '',
+        publisherLogoAlt: story.publisherLogoAlt,
+        posterPortrait: '',
+        posterAlt: story.posterAlt,
         author: story.author,
-        seoHeadline: story.seo_headline,
-        seoKeywords: story.seo_keywords?.join(", ") || "",
-        canonicalUrl: story.canonical_url,
+        seoHeadline: '',
+        seoKeywords: story.tags?.join(", ") || "",
+        canonicalUrl: story.canonicalUrl,
         status: story.status,
         category: story.category,
-        publishDate: story.publish_date,
-        updateDate: story.update_date,
+        publishDate: story.publishDate,
+        updateDate: story.updateDate,
       });
       // Normalize pages: add cta if missing
       let loadedPages = story.content ? JSON.parse(story.content) : [defaultPage()];
@@ -315,6 +360,8 @@ const StoryEditor = () => {
     ];
     const payloadRaw = {
       ...meta,
+      title: meta.title && meta.title.trim() ? meta.title : 'Untitled Story',
+      category: meta.category && meta.category.trim() ? meta.category : 'General',
       status,
       publishDate,
       updateDate,

@@ -11,9 +11,9 @@ interface RelatedStoriesProps {
 }
 
 export const RelatedStories = ({ currentStoryId, category }: RelatedStoriesProps) => {
-  const { data, isLoading, error } = useStories({ 
-    category, 
-    limit: 3 
+  const { data, isLoading, error } = useStories({
+    category,
+    limit: 3
   });
 
   if (isLoading) {

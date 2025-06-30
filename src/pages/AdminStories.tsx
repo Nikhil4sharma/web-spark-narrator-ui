@@ -17,8 +17,7 @@ const AdminStories = () => {
   // TODO: If subcategories exist, add subcategory state
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const { data: storiesData = { stories: [], total: 0 }, isLoading: storiesLoading } = useStories({
-    category: selectedCategory || undefined,
-    type: tab === "blog" ? "blog" : "story", // If you have a type field
+    admin: true
   });
   const navigate = useNavigate();
   const deleteStoryMutation = useDeleteStory();

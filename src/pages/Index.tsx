@@ -18,8 +18,7 @@ const Index = () => {
 
   // Fetch stories and categories using custom hooks
   const { data: storiesData, isLoading: storiesLoading, error: storiesError } = useStories({
-    category: selectedCategory === "all" ? undefined : selectedCategory,
-    search: searchTerm || undefined,
+    // admin flag mat bhejo, sirf published stories chahiye
   });
 
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();

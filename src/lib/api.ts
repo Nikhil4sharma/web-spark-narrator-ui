@@ -160,8 +160,8 @@ class ApiService {
   async createStory(data: CreateStoryRequest): Promise<Story> {
     try {
       const storyData = {
-        title: data.title,
-        slug: data.slug || data.title.toLowerCase().replace(/\s+/g, '-'),
+        title: data.title || 'Untitled Story',
+        slug: data.slug || ((data.title || 'Untitled Story').toLowerCase().replace(/\s+/g, '-')),
         content: data.content,
         category: data.category,
         cover_image: data.coverImage,
@@ -424,6 +424,21 @@ class ApiService {
       if (error) throw error;
     } catch (error) {
       console.error('Error during logout:', error);
+      throw error;
+    }
+  }
+
+  async getStoryById(id: string): Promise<Story | null> {
+    try {
+      const { data, error } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return data ? this.mapStoryRow(data) : null;
+    } catch (error) {
+      console.error('Error fetching story by id:', error);
       throw error;
     }
   }
