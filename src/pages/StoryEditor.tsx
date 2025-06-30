@@ -35,7 +35,7 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
   const page = pages[selectedPageIdx];
   if (!page) return null;
   return (
-    <div className="relative w-full max-w-xs h-[70vh] min-h-[400px] bg-black flex flex-col overflow-hidden mx-auto" style={{WebkitOverflowScrolling: 'touch'}}>
+    <div className="relative w-full max-w-xs h-[70vh] min-h-[400px] bg-black flex flex-col overflow-hidden mx-auto" style={{WebkitOverflowScrolling: 'touch', overflowY: 'hidden'}}>
       {/* Background */}
       {page.backgroundType === 'image' && page.backgroundUrl && (
         <img src={page.backgroundUrl} alt={page.backgroundAlt || 'story background'} className="absolute inset-0 w-full h-full object-cover z-0" />
@@ -75,39 +75,46 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
           {page.elements.map((el: any) => {
             if (el.type === 'text') {
               return (
-                <div key={el.id} className="story-text-card w-full" style={{
+                <div key={el.id} className="story-text-card w-full mb-4" style={{
                   color: '#fff',
                   textAlign: 'center',
                   padding: '1rem 1.25rem',
                   fontWeight: 500,
                   textShadow: '0 2px 8px #0008',
-                  maxHeight: '60vh',
-                  overflowY: 'auto',
-                  WebkitOverflowScrolling: 'touch',
                   borderRadius: '18px 18px 0 0',
                   marginBottom: '1rem',
                   position: 'relative',
                   background: 'rgba(20,20,20,0.35)',
                   backdropFilter: 'blur(16px)',
                   WebkitBackdropFilter: 'blur(16px)',
+                  fontSize: 'clamp(1rem, 2.5vw, 1.15rem)',
+                  lineHeight: 1.3,
+                  maxHeight: 'none',
+                  overflow: 'hidden',
                 }}>
                   {el.blocks.map((block: any) => {
                     const Tag = block.tag;
                     return (
                       <Tag
                         key={block.id}
+                        className="line-clamp-3"
                         style={{
                           textAlign: block.style?.align || 'center',
                           color: block.style?.color || '#fff',
                           fontWeight: block.style?.fontWeight || 'bold',
                           fontStyle: block.style?.fontStyle || 'normal',
                           fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
-                          fontSize: block.style?.fontSize || (block.tag === 'h1' ? '2em' : block.tag === 'h2' ? '1.5em' : block.tag === 'h3' ? '1.2em' : '1em'),
+                          fontSize: block.style?.fontSize || (block.tag === 'h1' ? 'clamp(1.2em, 4vw, 2em)' : block.tag === 'h2' ? 'clamp(1.1em, 3vw, 1.5em)' : block.tag === 'h3' ? 'clamp(1em, 2.5vw, 1.2em)' : 'clamp(0.95em, 2vw, 1em)'),
                           letterSpacing: block.style?.letterSpacing || '0px',
                           lineHeight: block.style?.lineHeight || '1.2',
                           margin: 0,
                           padding: 0,
                           textShadow: '0 2px 8px #0008',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical',
                         }}
                       >
                         {block.value}
