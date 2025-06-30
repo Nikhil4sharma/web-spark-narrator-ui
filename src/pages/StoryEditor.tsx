@@ -35,23 +35,7 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
   const page = pages[selectedPageIdx];
   if (!page) return null;
   return (
-    <div className="relative w-full max-w-xs h-[70vh] min-h-[400px] bg-black overflow-y-auto flex flex-col items-center justify-center mx-auto" style={{WebkitOverflowScrolling: 'touch'}}>
-      {/* Progress Bar */}
-      <div className="absolute top-0 left-0 w-full flex gap-1 px-6 pt-4 z-30">
-        {pages.map((_, idx) => (
-          <div key={idx} className={`flex-1 h-1 rounded-full transition-all duration-300 ${idx <= selectedPageIdx ? 'bg-white' : 'bg-gray-400/50'}`}></div>
-        ))}
-      </div>
-      {/* Publisher logo + title */}
-      {meta.publisherLogo && (
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
-          <img src={meta.publisherLogo} alt="Publisher Logo" className="w-12 h-12 object-contain rounded-full bg-white/90 shadow" />
-          <div className="text-center mt-1">
-            <span className="block text-lg font-bold text-red-600 leading-none">Aaj ki</span>
-            <span className="block text-base font-semibold text-neutral-900 leading-none">Story</span>
-          </div>
-        </div>
-      )}
+    <div className="relative w-full max-w-xs h-[70vh] min-h-[400px] bg-black flex flex-col overflow-hidden mx-auto" style={{WebkitOverflowScrolling: 'touch'}}>
       {/* Background */}
       {page.backgroundType === 'image' && page.backgroundUrl && (
         <img src={page.backgroundUrl} alt={page.backgroundAlt || 'story background'} className="absolute inset-0 w-full h-full object-cover z-0" />
@@ -59,124 +43,121 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
       {page.backgroundType === 'video' && page.backgroundUrl && (
         <video src={page.backgroundUrl} className="absolute inset-0 w-full h-full object-cover z-0" autoPlay loop muted playsInline aria-label={page.backgroundAlt || 'story background video'} />
       )}
-      {/* Gradient Overlay for text readability */}
-      <div className="story-gradient" style={{
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        height: '40%',
-        background: 'linear-gradient(to top, rgba(0,0,0,0.10) 80%, transparent 100%)',
-        zIndex: 2,
-      }}></div>
-      {/* Text Card (bottom) */}
-      {page.elements.map((el: any) => {
-        if (el.type === 'text') {
-          return (
-            <div key={el.id} className="story-text-card" style={{
-              zIndex: 3,
-              position: 'relative',
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              color: '#fff',
-              textAlign: 'center',
-              padding: '1rem 1.25rem',
-              fontWeight: 500,
-              textShadow: '0 2px 8px #0008',
-              maxHeight: '40vh',
-              overflowY: 'auto',
-              WebkitOverflowScrolling: 'touch',
-              marginBottom: page.cta && page.cta.text ? '72px' : '0',
-            }}>
-              {/* Glassmorphism Blur Only Behind Text */}
-              <div style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: '100%',
-                height: '100%',
-                background: 'rgba(20,20,20,0.35)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                borderTopLeftRadius: '18px',
-                borderTopRightRadius: '18px',
-                borderBottomLeftRadius: '0',
-                borderBottomRightRadius: '0',
-                zIndex: 0,
-              }} />
-              <div style={{position: 'relative', zIndex: 1, width: '100%'}}>
-                {el.blocks.map((block: any) => {
-                  const Tag = block.tag;
-                  return (
-                    <Tag
-                      key={block.id}
-                      style={{
-                        textAlign: block.style?.align || 'center',
-                        color: block.style?.color || '#fff',
-                        fontWeight: block.style?.fontWeight || 'bold',
-                        fontStyle: block.style?.fontStyle || 'normal',
-                        fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
-                        fontSize: block.style?.fontSize || (block.tag === 'h1' ? '2em' : block.tag === 'h2' ? '1.5em' : block.tag === 'h3' ? '1.2em' : '1em'),
-                        letterSpacing: block.style?.letterSpacing || '0px',
-                        lineHeight: block.style?.lineHeight || '1.2',
-                        margin: 0,
-                        padding: 0,
-                        textShadow: '0 2px 8px #0008',
-                      }}
-                    >
-                      {block.value}
-                    </Tag>
-                  );
-                })}
-                {/* Image Credit (optional) */}
-                {page.backgroundCredit && (
-                  <div className="text-xs mt-2 opacity-80">Image Credit: {page.backgroundCredit}</div>
-                )}
-              </div>
-            </div>
-          );
-        }
-        return null;
-      })}
-      {/* CTA Button at the very bottom, with margin */}
-      {page.cta && page.cta.text && page.cta.url && (
-        <a
-          href={page.cta.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            position: 'absolute',
-            left: '50%',
-            bottom: '24px',
-            transform: 'translateX(-50%)',
-            width: '91.666%', // w-11/12
-            maxWidth: '320px',
-            background: page.cta.bgColor || '#e11d48',
-            color: page.cta.textColor || '#fff',
-            borderRadius: '999px',
-            padding: '0.75rem 1.5rem',
-            fontWeight: 700,
-            fontSize: '1.1rem',
-            boxShadow: '0 4px 24px 0 rgba(0,0,0,0.12)',
-            textAlign: 'center',
-            zIndex: 10,
-            textDecoration: 'none',
-            letterSpacing: '0.5px',
-            transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-          }}
-        >
-          {page.cta.text}
-        </a>
-      )}
-      {/* Page indicator & navigation (preview mode) */}
-      {mode === 'preview' && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-          <button disabled={selectedPageIdx === 0} onClick={() => onPageChange && onPageChange(selectedPageIdx - 1)} className="bg-white/70 hover:bg-white/90 rounded-full px-3 py-1 shadow disabled:opacity-40">◀</button>
-          <span className="text-xs font-bold text-gray-700 bg-white/70 rounded-full px-3 py-1">Page {selectedPageIdx + 1} / {pages.length}</span>
-          <button disabled={selectedPageIdx === pages.length - 1} onClick={() => { onPageChange && onPageChange(selectedPageIdx + 1); }} className="bg-white/70 hover:bg-white/90 rounded-full px-3 py-1 shadow disabled:opacity-40">▶</button>
+      {/* Overlay content */}
+      <div className="flex-1 flex flex-col justify-end relative z-10 w-full">
+        {/* Progress Bar */}
+        <div className="absolute top-0 left-0 w-full flex gap-1 px-6 pt-4 z-30">
+          {pages.map((_, idx) => (
+            <div key={idx} className={`flex-1 h-1 rounded-full transition-all duration-300 ${idx <= selectedPageIdx ? 'bg-white' : 'bg-gray-400/50'}`}></div>
+          ))}
         </div>
-      )}
+        {/* Publisher logo + title */}
+        {meta.publisherLogo && (
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
+            <img src={meta.publisherLogo} alt="Publisher Logo" className="w-12 h-12 object-contain rounded-full bg-white/90 shadow" />
+            <div className="text-center mt-1">
+              <span className="block text-lg font-bold text-red-600 leading-none">Aaj ki</span>
+              <span className="block text-base font-semibold text-neutral-900 leading-none">Story</span>
+            </div>
+          </div>
+        )}
+        {/* Gradient Overlay for text readability */}
+        <div className="story-gradient" style={{
+          position: 'absolute',
+          bottom: 0,
+          width: '100%',
+          height: '40%',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.10) 80%, transparent 100%)',
+          zIndex: 2,
+        }}></div>
+        {/* Text + CTA wrapper */}
+        <div className="flex flex-col items-center w-full px-2 pb-2 relative z-10">
+          {page.elements.map((el: any) => {
+            if (el.type === 'text') {
+              return (
+                <div key={el.id} className="story-text-card w-full" style={{
+                  color: '#fff',
+                  textAlign: 'center',
+                  padding: '1rem 1.25rem',
+                  fontWeight: 500,
+                  textShadow: '0 2px 8px #0008',
+                  maxHeight: '60vh',
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  borderRadius: '18px 18px 0 0',
+                  marginBottom: '1rem',
+                  position: 'relative',
+                  background: 'rgba(20,20,20,0.35)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                }}>
+                  {el.blocks.map((block: any) => {
+                    const Tag = block.tag;
+                    return (
+                      <Tag
+                        key={block.id}
+                        style={{
+                          textAlign: block.style?.align || 'center',
+                          color: block.style?.color || '#fff',
+                          fontWeight: block.style?.fontWeight || 'bold',
+                          fontStyle: block.style?.fontStyle || 'normal',
+                          fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+                          fontSize: block.style?.fontSize || (block.tag === 'h1' ? '2em' : block.tag === 'h2' ? '1.5em' : block.tag === 'h3' ? '1.2em' : '1em'),
+                          letterSpacing: block.style?.letterSpacing || '0px',
+                          lineHeight: block.style?.lineHeight || '1.2',
+                          margin: 0,
+                          padding: 0,
+                          textShadow: '0 2px 8px #0008',
+                        }}
+                      >
+                        {block.value}
+                      </Tag>
+                    );
+                  })}
+                  {/* Image Credit (optional) */}
+                  {page.backgroundCredit && (
+                    <div className="text-xs mt-2 opacity-80">Image Credit: {page.backgroundCredit}</div>
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })}
+          {/* CTA Button at the very bottom, with margin */}
+          {page.cta && page.cta.text && page.cta.url && (
+            <a
+              href={page.cta.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-11/12 max-w-xs mx-auto mb-4"
+              style={{
+                background: page.cta.bgColor || '#e11d48',
+                color: page.cta.textColor || '#fff',
+                borderRadius: '999px',
+                padding: '0.75rem 1.5rem',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                boxShadow: '0 4px 24px 0 rgba(0,0,0,0.12)',
+                textAlign: 'center',
+                zIndex: 10,
+                textDecoration: 'none',
+                letterSpacing: '0.5px',
+                transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
+              }}
+            >
+              {page.cta.text}
+            </a>
+          )}
+        </div>
+        {/* Page indicator & navigation (preview mode) */}
+        {mode === 'preview' && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            <button disabled={selectedPageIdx === 0} onClick={() => onPageChange && onPageChange(selectedPageIdx - 1)} className="bg-white/70 hover:bg-white/90 rounded-full px-3 py-1 shadow disabled:opacity-40">◀</button>
+            <span className="text-xs font-bold text-gray-700 bg-white/70 rounded-full px-3 py-1">Page {selectedPageIdx + 1} / {pages.length}</span>
+            <button disabled={selectedPageIdx === pages.length - 1} onClick={() => { onPageChange && onPageChange(selectedPageIdx + 1); }} className="bg-white/70 hover:bg-white/90 rounded-full px-3 py-1 shadow disabled:opacity-40">▶</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
