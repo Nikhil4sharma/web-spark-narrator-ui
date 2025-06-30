@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Save, Image, Video, Trash2, ArrowLeft, Loader2, Info, Tag, Calendar, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useStory, useCreateStory, useUpdateStory } from "@/hooks/use-stories";
+import { useStoryById, useCreateStory, useUpdateStory } from "@/hooks/use-stories";
 import { useCategories } from "@/hooks/use-categories";
 import Footer from "@/components/footer";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
@@ -22,16 +22,36 @@ const defaultPage = () => ({
   backgroundUrl: "",
   backgroundAlt: "",
   elements: [], // overlays: text/image/video
+  cta: {
+    text: "",
+    url: "",
+    bgColor: "#e11d48",
+    textColor: "#fff",
+  },
 });
 
 // LivePreview component for real-time story preview
-const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClick, selectedElementIdx, onElementDelete }: { pages: any[], selectedPageIdx: number, mode: 'edit' | 'preview', onPageChange?: (idx: number) => void, onElementClick?: (idx: number) => void, selectedElementIdx?: number, onElementDelete?: (idx: number) => void }) => {
+const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClick, selectedElementIdx, onElementDelete, meta }: { pages: any[], selectedPageIdx: number, mode: 'edit' | 'preview', onPageChange?: (idx: number) => void, onElementClick?: (idx: number) => void, selectedElementIdx?: number, onElementDelete?: (idx: number) => void, meta: any }) => {
   const page = pages[selectedPageIdx];
   if (!page) return null;
   return (
-    <div className="relative w-[320px] h-[570px] bg-gradient-to-br from-white/80 to-gray-100/80 rounded-3xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col items-center justify-center mx-auto">
-      {/* Mobile notch */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-2 bg-gray-300 rounded-full opacity-60 z-10" />
+    <div className="relative w-[320px] h-[570px] bg-black overflow-hidden flex flex-col items-center justify-center mx-auto">
+      {/* Progress Bar */}
+      <div className="absolute top-0 left-0 w-full flex gap-1 px-6 pt-4 z-30">
+        {pages.map((_, idx) => (
+          <div key={idx} className={`flex-1 h-1 rounded-full transition-all duration-300 ${idx <= selectedPageIdx ? 'bg-white' : 'bg-gray-400/50'}`}></div>
+        ))}
+      </div>
+      {/* Publisher logo + title */}
+      {meta.publisherLogo && (
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
+          <img src={meta.publisherLogo} alt="Publisher Logo" className="w-12 h-12 object-contain rounded-full bg-white/90 shadow" />
+          <div className="text-center mt-1">
+            <span className="block text-lg font-bold text-red-600 leading-none">Aaj ki</span>
+            <span className="block text-base font-semibold text-neutral-900 leading-none">Story</span>
+          </div>
+        </div>
+      )}
       {/* Background */}
       {page.backgroundType === 'image' && page.backgroundUrl && (
         <img src={page.backgroundUrl} alt={page.backgroundAlt || 'story background'} className="absolute inset-0 w-full h-full object-cover z-0" />
@@ -39,50 +59,49 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
       {page.backgroundType === 'video' && page.backgroundUrl && (
         <video src={page.backgroundUrl} className="absolute inset-0 w-full h-full object-cover z-0" autoPlay loop muted playsInline aria-label={page.backgroundAlt || 'story background video'} />
       )}
-      {/* Overlays */}
-      {page.elements.map((el: any, i: number) => {
+      {/* Gradient Overlay for text readability */}
+      <div className="story-gradient" style={{
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        height: '40%',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.10) 80%, transparent 100%)',
+        zIndex: 2,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)'
+      }}></div>
+      {/* Text Card (bottom) */}
+      {page.elements.map((el: any) => {
         if (el.type === 'text') {
-          const Tag = el.style?.fontType || 'h2';
-          const isSelected = selectedElementIdx === i;
           return (
-            <div key={el.id} className="absolute left-0 bottom-0 z-10 w-full flex justify-center">
-              <div
-                className={`backdrop-blur-sm`} style={{
-                  background: 'rgba(0,0,0,0.10)',
-                  borderTopLeftRadius: '1rem',
-                  borderTopRightRadius: '1rem',
-                  borderBottomLeftRadius: 0,
-                  borderBottomRightRadius: 0,
-                  padding: '1.25rem 1.5rem',
-                  boxShadow: '0 8px 32px 0 rgba(0,0,0,0.18), 0 0 32px 8px rgba(0,0,0,0.10)',
-                  borderTop: '1px solid rgba(255,255,255,0.3)',
-                  transition: 'all 0.2s',
-                  position: 'relative',
-                  ...(isSelected ? { transform: 'scale(1.05)' } : {}),
-                  textAlign: el.style?.align || 'center',
-                  color: el.style?.color || '#fff',
-                  fontWeight: el.style?.fontWeight || 'bold',
-                  fontStyle: el.style?.fontStyle || 'normal',
-                  fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
-                  fontSize: el.style?.fontSize || '2em',
-                  letterSpacing: el.style?.letterSpacing || '0px',
-                  lineHeight: el.style?.lineHeight || '1.2',
-                  textShadow: '0 2px 8px #0008',
-                  width: '100%',
-                  cursor: 'pointer',
-                }}
-                onClick={e => { e.stopPropagation(); onElementClick && onElementClick(i); }}
-              >
-                <Tag>{el.value}</Tag>
-                {/* Edit icon */}
-                <button className="absolute top-2 right-10 bg-primary/80 text-white rounded-full p-1 shadow hover:bg-primary" onClick={e => { e.stopPropagation(); onElementClick && onElementClick(i); }} title="Edit">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg>
-                </button>
-                {/* Delete icon */}
-                <button className="absolute top-2 right-2 bg-red-500/80 text-white rounded-full p-1 shadow hover:bg-red-600" onClick={e => { e.stopPropagation(); if (typeof onElementDelete === 'function') onElementDelete(i); }} title="Delete">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
+            <div key={el.id} className="story-text-card" style={{zIndex: 3, position: 'absolute', left: 0, bottom: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#fff', textAlign: 'center', padding: '1.25rem 1.5rem', fontWeight: 500, textShadow: '0 2px 8px #0008'}}>
+              {el.blocks.map((block: any) => {
+                const Tag = block.tag;
+                return (
+                  <Tag
+                    key={block.id}
+                    style={{
+                      textAlign: block.style?.align || 'center',
+                      color: block.style?.color || '#fff',
+                      fontWeight: block.style?.fontWeight || 'bold',
+                      fontStyle: block.style?.fontStyle || 'normal',
+                      fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+                      fontSize: block.style?.fontSize || (block.tag === 'h1' ? '2em' : block.tag === 'h2' ? '1.5em' : block.tag === 'h3' ? '1.2em' : '1em'),
+                      letterSpacing: block.style?.letterSpacing || '0px',
+                      lineHeight: block.style?.lineHeight || '1.2',
+                      margin: 0,
+                      padding: 0,
+                      textShadow: '0 2px 8px #0008',
+                    }}
+                  >
+                    {block.value}
+                  </Tag>
+                );
+              })}
+              {/* Image Credit (optional) */}
+              {page.backgroundCredit && (
+                <div className="text-xs mt-2 opacity-80">Image Credit: {page.backgroundCredit}</div>
+              )}
             </div>
           );
         }
@@ -93,7 +112,7 @@ const LivePreview = ({ pages, selectedPageIdx, mode, onPageChange, onElementClic
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
           <button disabled={selectedPageIdx === 0} onClick={() => onPageChange && onPageChange(selectedPageIdx - 1)} className="bg-white/70 hover:bg-white/90 rounded-full px-3 py-1 shadow disabled:opacity-40">◀</button>
           <span className="text-xs font-bold text-gray-700 bg-white/70 rounded-full px-3 py-1">Page {selectedPageIdx + 1} / {pages.length}</span>
-          <button disabled={selectedPageIdx === pages.length - 1} onClick={() => onPageChange && onPageChange(selectedPageIdx + 1)} className="bg-white/70 hover:bg-white/90 rounded-full px-3 py-1 shadow disabled:opacity-40">▶</button>
+          <button disabled={selectedPageIdx === pages.length - 1} onClick={() => { onPageChange && onPageChange(selectedPageIdx + 1); }} className="bg-white/70 hover:bg-white/90 rounded-full px-3 py-1 shadow disabled:opacity-40">▶</button>
         </div>
       )}
     </div>
@@ -111,14 +130,19 @@ const StoryEditor = () => {
     slug: "",
     description: "",
     publisher: "",
+    publisherName: "",
     publisherLogo: "",
+    publisherLogoAlt: "",
     posterPortrait: "",
+    posterAlt: "",
     author: "",
     seoHeadline: "",
     seoKeywords: "",
     canonicalUrl: "",
     status: "draft",
     category: "",
+    publishDate: "",
+    updateDate: "",
   });
 
   // Pages array
@@ -129,7 +153,7 @@ const StoryEditor = () => {
   const [previewPageIdx, setPreviewPageIdx] = useState(0);
 
   // Fetch story data if editing
-  const { data: story, isLoading: storyLoading } = useStory(id || "");
+  const { data: story, isLoading: storyLoading } = useStoryById(id || "");
   const { data: categories = [] } = useCategories();
   const createStoryMutation = useCreateStory();
   const updateStoryMutation = useUpdateStory();
@@ -148,16 +172,28 @@ const StoryEditor = () => {
         slug: story.slug,
         description: story.description,
         publisher: story.publisher,
+        publisherName: story.publisher_name,
         publisherLogo: story.publisher_logo_url,
+        publisherLogoAlt: story.publisher_logo_alt,
         posterPortrait: story.poster_portrait_url,
+        posterAlt: story.poster_alt,
         author: story.author,
         seoHeadline: story.seo_headline,
         seoKeywords: story.seo_keywords?.join(", ") || "",
         canonicalUrl: story.canonical_url,
         status: story.status,
         category: story.category,
+        publishDate: story.publish_date,
+        updateDate: story.update_date,
       });
-      setPages(story.pages || [defaultPage()]);
+      // Normalize pages: add cta if missing
+      let loadedPages = story.content ? JSON.parse(story.content) : [defaultPage()];
+      loadedPages = loadedPages.map((p: any) => ({
+        ...p,
+        cta: p.cta || { text: '', url: '', bgColor: '#e11d48', textColor: '#fff' },
+        elements: p.elements || [],
+      }));
+      setPages(loadedPages);
     }
   }, [story, isEditing]);
 
@@ -179,9 +215,14 @@ const StoryEditor = () => {
       const newElement = {
         id: Date.now().toString(),
         type,
-        value: "New text",
-        position: { x: 50, y: 50 },
-        style: { fontSize: "2em", color: "#fff" },
+        blocks: [
+          {
+            id: Date.now().toString() + '-block',
+            tag: 'h1',
+            value: 'New Heading',
+            style: { fontSize: '2em', color: '#fff', fontWeight: 'bold', fontStyle: 'normal', letterSpacing: '0px', lineHeight: '1.2', align: 'center' },
+          },
+        ],
       };
       setPages(pages.map((p, i) => i === selectedPageIdx ? { ...p, elements: [...p.elements, newElement] } : p));
     } else if (type === "image") {
@@ -255,24 +296,46 @@ const StoryEditor = () => {
     } : p));
   };
 
+  // Helper to clean date fields
+  const cleanDate = (d: string) => d && d.trim() ? d : null;
+
   // Save/Publish story
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent, forceStatus?: 'draft' | 'published') => {
+    if (e) e.preventDefault();
     setIsLoading(true);
-    const payload = {
+    let status = forceStatus || meta.status;
+    let publishDate = cleanDate(meta.publishDate);
+    let updateDate = cleanDate(meta.updateDate);
+    if (status === 'published' && !publishDate) {
+      publishDate = new Date().toISOString().slice(0, 10);
+    }
+    const allowedFields = [
+      'title', 'slug', 'content', 'category', 'coverImage', 'status', 'author', 'tags', 'reading_time',
+      'publisherName', 'publisherLogoAlt', 'posterAlt', 'publishDate', 'updateDate', 'canonicalUrl'
+    ];
+    const payloadRaw = {
       ...meta,
-      seoKeywords: meta.seoKeywords.split(",").map(k => k.trim()),
-      pages,
+      status,
+      publishDate,
+      updateDate,
+      coverImage: meta.posterPortrait,
+      tags: Array.isArray(meta.seoKeywords) ? meta.seoKeywords : meta.seoKeywords.split(',').map(k => k.trim()).filter(Boolean),
+      publisherName: meta.publisherName,
+      publisherLogoAlt: meta.publisherLogoAlt,
+      posterAlt: meta.posterAlt,
+      canonicalUrl: meta.canonicalUrl,
+      content: JSON.stringify(pages),
     };
+    const payload = Object.fromEntries(Object.entries(payloadRaw).filter(([k, v]) => allowedFields.includes(k) && (v !== '' && v !== undefined)));
     try {
       if (isEditing && story) {
         await updateStoryMutation.mutateAsync({ id: story.id, ...payload });
-        toast({ title: "Story updated", description: `"${meta.title}" has been updated successfully.` });
+        toast({ title: status === 'published' ? 'Story published' : 'Draft saved', description: `"${meta.title}" has been updated successfully.` });
       } else {
         await createStoryMutation.mutateAsync(payload);
-        toast({ title: "Story created", description: `"${meta.title}" has been created successfully.` });
+        toast({ title: status === 'published' ? 'Story published' : 'Draft saved', description: `"${meta.title}" has been created successfully.` });
       }
-      navigate("/admin/dashboard");
+      if (status === 'published') navigate("/admin/dashboard");
     } catch (error) {
       toast({ title: "Error", description: `Failed to ${isEditing ? 'update' : 'create'} story. Please try again.`, variant: "destructive" });
     } finally {
@@ -280,11 +343,16 @@ const StoryEditor = () => {
     }
   };
 
-  // Tooltip helper
+  // Replace InfoTip with a custom tooltip that shows the usecase text on hover/focus, and displays a question mark icon
   const InfoTip = ({ text }: { text: string }) => (
-    <Tooltip content={text}>
-      <Info className="inline w-4 h-4 ml-1 text-muted-foreground cursor-help" />
-    </Tooltip>
+    <span className="relative inline-block align-middle ml-1">
+      <span className="w-4 h-4 inline-flex items-center justify-center rounded-full bg-gray-200 text-gray-600 text-xs font-bold cursor-help border border-gray-300" tabIndex={0}>
+        ?
+      </span>
+      <span className="absolute left-1/2 -translate-x-1/2 mt-2 w-56 bg-black text-white text-xs rounded shadow-lg px-2 py-1 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-focus:opacity-100 transition-opacity" style={{top: '100%'}}>
+        {text}
+      </span>
+    </span>
   );
 
   // Add font options
@@ -296,6 +364,22 @@ const StoryEditor = () => {
     { label: 'Merriweather', value: 'Merriweather, serif' },
     { label: 'Oswald', value: 'Oswald, sans-serif' },
   ];
+
+  // Add state: selectedBlockIdx
+  const [selectedBlockIdx, setSelectedBlockIdx] = useState<number | null>(0);
+
+  // Add state: animatePage
+  const [animatePage, setAnimatePage] = useState(false);
+
+  // Draft auto-save: useEffect debounce
+  useEffect(() => {
+    if (!isEditing || meta.status === 'published') return;
+    const timeout = setTimeout(() => {
+      handleSubmit(undefined as any, 'draft');
+    }, 1500);
+    return () => clearTimeout(timeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meta, pages]);
 
   // UI
   return (
@@ -349,6 +433,18 @@ const StoryEditor = () => {
                       <Input value={meta.posterPortrait} onChange={e => handleMetaChange('posterPortrait', e.target.value)} placeholder="https://..." />
                       <Label>Publisher Logo URL</Label>
                       <Input value={meta.publisherLogo} onChange={e => handleMetaChange('publisherLogo', e.target.value)} placeholder="https://..." />
+                      <Label>Publisher Name <InfoTip text="Google Discover/AMP me publisher ke naam ke liye. Brand/website ka naam daalein." /></Label>
+                      <Input value={meta.publisherName} onChange={e => handleMetaChange('publisherName', e.target.value)} placeholder="Aapke Brand ka Naam" />
+                      <Label>Publisher Logo Alt <InfoTip text="Logo image ka alt text. Accessibility aur SEO ke liye zaroori." /></Label>
+                      <Input value={meta.publisherLogoAlt} onChange={e => handleMetaChange('publisherLogoAlt', e.target.value)} placeholder="Logo ka description" />
+                      <Label>Poster Image Alt <InfoTip text="Story ki cover image ka alt text. Google ko samjhane ke liye image kis cheez ki hai." /></Label>
+                      <Input value={meta.posterAlt} onChange={e => handleMetaChange('posterAlt', e.target.value)} placeholder="Cover image ka description" />
+                      <Label>Publish Date <InfoTip text="Story ki publish date. Google Discover me dikhane ke liye zaroori." /></Label>
+                      <Input type="date" value={meta.publishDate} onChange={e => handleMetaChange('publishDate', e.target.value)} />
+                      <Label>Update Date <InfoTip text="Story last update hui kab. AMP/SEO ke liye zaroori." /></Label>
+                      <Input type="date" value={meta.updateDate} onChange={e => handleMetaChange('updateDate', e.target.value)} />
+                      <Label>Canonical URL <InfoTip text="Original story ka URL. AMP/Discover me duplicate content avoid karne ke liye." /></Label>
+                      <Input value={meta.canonicalUrl} onChange={e => handleMetaChange('canonicalUrl', e.target.value)} placeholder="https://aapkiwebsite.com/stories/slug" />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -360,18 +456,31 @@ const StoryEditor = () => {
         {/* CENTER: Mobile Preview Canvas (moved up for bottom bar visibility) */}
         <section className="flex-1 flex flex-col items-center justify-start pt-4">
           <div className="relative w-[340px] h-[600px] bg-white/40 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col items-center justify-center">
-            <LivePreview 
-              pages={pages} 
-              selectedPageIdx={selectedPageIdx} 
-              mode={previewTab} 
-              onPageChange={setPreviewPageIdx}
-              onElementClick={setSelectedElementIdx}
-              selectedElementIdx={selectedElementIdx}
-              onElementDelete={(idx) => {
-                removeElement(idx);
-                if (selectedElementIdx === idx) setSelectedElementIdx(null);
-              }}
-            />
+            {/* Publisher logo + 'Aaj ki' (red) + 'Story' (black/gray) at top center, below the notch, above the story content */}
+            {meta.publisherLogo && (
+              <div className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
+                <img src={meta.publisherLogo} alt="Publisher Logo" className="w-12 h-12 object-contain rounded-full bg-white/90 shadow" />
+                <div className="text-center mt-1">
+                  <span className="block text-lg font-bold text-red-600 leading-none">Aaj ki</span>
+                  <span className="block text-base font-semibold text-neutral-900 leading-none">Story</span>
+                </div>
+              </div>
+            )}
+            <div className={`relative w-[320px] h-[570px] ... ${animatePage ? 'animate-fade-slide' : ''}`}>
+              <LivePreview 
+                pages={pages} 
+                selectedPageIdx={selectedPageIdx} 
+                mode={previewTab} 
+                onPageChange={setPreviewPageIdx}
+                onElementClick={setSelectedElementIdx}
+                selectedElementIdx={selectedElementIdx}
+                onElementDelete={(idx) => {
+                  removeElement(idx);
+                  if (selectedElementIdx === idx) setSelectedElementIdx(null);
+                }}
+                meta={meta}
+              />
+            </div>
           </div>
           {/* Add buttons below preview */}
           <div className="flex gap-4 mt-4 bg-white/60 rounded-2xl shadow p-4">
@@ -425,30 +534,88 @@ const StoryEditor = () => {
               )}
               {selectedElement && selectedElement.type === 'text' ? (
                 <div className="space-y-4">
-                  <Label>Text</Label>
-                  <Input value={selectedElement.value} onChange={e => updateSelectedElementValue(e.target.value)} />
-                  <Label>Font Size</Label>
-                  <Slider min={12} max={64} step={1} value={[parseInt(selectedElement.style?.fontSize || '24')]} onValueChange={([v]) => updateSelectedElementStyle({ fontSize: v + 'px' })} />
-                  <Label>Color</Label>
-                  <input type="color" className="w-10 h-10 p-0 border-0 bg-transparent" value={selectedElement.style?.color || '#ffffff'} onChange={e => updateSelectedElementStyle({ color: e.target.value })} />
-                  <Label>Alignment</Label>
-                  <select className="w-full border rounded px-2 py-1" value={selectedElement.style?.align || 'center'} onChange={e => updateSelectedElementAlign(e.target.value)}>
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                  </select>
-                  <div className="flex gap-2">
-                    <Button type="button" variant={selectedElement.style?.fontWeight === 'bold' ? 'default' : 'outline'} size="sm" onClick={() => updateSelectedElementStyle({ fontWeight: selectedElement.style?.fontWeight === 'bold' ? 'normal' : 'bold' })}>B</Button>
-                    <Button type="button" variant={selectedElement.style?.fontStyle === 'italic' ? 'default' : 'outline'} size="sm" onClick={() => updateSelectedElementStyle({ fontStyle: selectedElement.style?.fontStyle === 'italic' ? 'normal' : 'italic' })}><span style={{ fontStyle: 'italic' }}>I</span></Button>
+                  <Label>Blocks</Label>
+                  <ul className="space-y-1">
+                    {selectedElement.blocks.map((block, idx) => (
+                      <li key={block.id} className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer ${selectedBlockIdx === idx ? 'bg-primary/10' : 'hover:bg-muted/40'}`} onClick={() => setSelectedBlockIdx(idx)}>
+                        <span className="capitalize text-xs font-semibold">{block.tag.toUpperCase()}</span>
+                        <span className="truncate flex-1 text-xs">{block.value?.slice(0, 18)}</span>
+                        <button className="text-red-500 hover:text-red-700" onClick={e => { e.stopPropagation(); const newBlocks = selectedElement.blocks.filter((_, bIdx) => bIdx !== idx); updateElement(selectedElementIdx!, { blocks: newBlocks }); setSelectedBlockIdx(0); }} title="Delete Block">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex gap-2 mb-2">
+                    <Button type="button" size="sm" onClick={() => { const newBlock = { id: Date.now().toString() + '-block', tag: 'h1', value: 'Heading', style: { fontSize: '2em', color: '#fff', fontWeight: 'bold', fontStyle: 'normal', letterSpacing: '0px', lineHeight: '1.2', align: 'center' } }; updateElement(selectedElementIdx!, { blocks: [...selectedElement.blocks, newBlock] }); setSelectedBlockIdx(selectedElement.blocks.length); }}>+ H1</Button>
+                    <Button type="button" size="sm" onClick={() => { const newBlock = { id: Date.now().toString() + '-block', tag: 'h2', value: 'Subheading', style: { fontSize: '1.5em', color: '#fff', fontWeight: 'bold', fontStyle: 'normal', letterSpacing: '0px', lineHeight: '1.2', align: 'center' } }; updateElement(selectedElementIdx!, { blocks: [...selectedElement.blocks, newBlock] }); setSelectedBlockIdx(selectedElement.blocks.length); }}>+ H2</Button>
+                    <Button type="button" size="sm" onClick={() => { const newBlock = { id: Date.now().toString() + '-block', tag: 'h3', value: 'Section', style: { fontSize: '1.2em', color: '#fff', fontWeight: 'bold', fontStyle: 'normal', letterSpacing: '0px', lineHeight: '1.2', align: 'center' } }; updateElement(selectedElementIdx!, { blocks: [...selectedElement.blocks, newBlock] }); setSelectedBlockIdx(selectedElement.blocks.length); }}>+ H3</Button>
+                    <Button type="button" size="sm" onClick={() => { const newBlock = { id: Date.now().toString() + '-block', tag: 'p', value: 'Paragraph', style: { fontSize: '1em', color: '#fff', fontWeight: 'normal', fontStyle: 'normal', letterSpacing: '0px', lineHeight: '1.5', align: 'left' } }; updateElement(selectedElementIdx!, { blocks: [...selectedElement.blocks, newBlock] }); setSelectedBlockIdx(selectedElement.blocks.length); }}>+ P</Button>
                   </div>
-                  <Label>Letter Spacing</Label>
-                  <Slider min={-2} max={10} step={0.5} value={[parseFloat(selectedElement.style?.letterSpacing || '0')]} onValueChange={([v]) => updateSelectedElementStyle({ letterSpacing: v + 'px' })} />
-                  <Label>Line Spacing</Label>
-                  <Slider min={1} max={2.5} step={0.05} value={[parseFloat(selectedElement.style?.lineHeight || '1.2')]} onValueChange={([v]) => updateSelectedElementStyle({ lineHeight: v.toString() })} />
-                  <Button variant="destructive" className="w-full" onClick={() => { removeElement(selectedElementIdx!); setSelectedElementIdx(null); }}>Delete This Overlay</Button>
+                  {selectedBlockIdx !== null && selectedElement.blocks[selectedBlockIdx] && (
+                    <>
+                      <Label>Text</Label>
+                      <Input value={selectedElement.blocks[selectedBlockIdx].value} onChange={e => { const newBlocks = [...selectedElement.blocks]; newBlocks[selectedBlockIdx].value = e.target.value; updateElement(selectedElementIdx!, { blocks: newBlocks }); }} />
+                      <Label>Font Size <span className="ml-2 text-xs text-muted-foreground">{parseInt(selectedElement.blocks[selectedBlockIdx].style?.fontSize || '24')}px</span></Label>
+                      <Slider min={12} max={64} step={1} value={[parseInt(selectedElement.blocks[selectedBlockIdx].style?.fontSize || '24')]} onValueChange={([v]) => { const newBlocks = [...selectedElement.blocks]; newBlocks[selectedBlockIdx].style.fontSize = v + 'px'; updateElement(selectedElementIdx!, { blocks: newBlocks }); }} />
+                      <Label>Color</Label>
+                      <input type="color" className="w-10 h-10 p-0 border-0 bg-transparent" value={selectedElement.blocks[selectedBlockIdx].style?.color || '#ffffff'} onChange={e => { const newBlocks = [...selectedElement.blocks]; newBlocks[selectedBlockIdx].style.color = e.target.value; updateElement(selectedElementIdx!, { blocks: newBlocks }); }} />
+                      <Label>Alignment</Label>
+                      <select className="w-full border rounded px-2 py-1" value={selectedElement.blocks[selectedBlockIdx].style?.align || 'center'} onChange={e => { const newBlocks = [...selectedElement.blocks]; newBlocks[selectedBlockIdx].style.align = e.target.value; updateElement(selectedElementIdx!, { blocks: newBlocks }); }}>
+                        <option value="left">Left</option>
+                        <option value="center">Center</option>
+                        <option value="right">Right</option>
+                      </select>
+                      <div className="flex gap-2">
+                        <Button type="button" variant={selectedElement.blocks[selectedBlockIdx].style?.fontWeight === 'bold' ? 'default' : 'outline'} size="sm" onClick={() => { const newBlocks = [...selectedElement.blocks]; newBlocks[selectedBlockIdx].style.fontWeight = newBlocks[selectedBlockIdx].style.fontWeight === 'bold' ? 'normal' : 'bold'; updateElement(selectedElementIdx!, { blocks: newBlocks }); }}>B</Button>
+                        <Button type="button" variant={selectedElement.blocks[selectedBlockIdx].style?.fontStyle === 'italic' ? 'default' : 'outline'} size="sm" onClick={() => { const newBlocks = [...selectedElement.blocks]; newBlocks[selectedBlockIdx].style.fontStyle = newBlocks[selectedBlockIdx].style.fontStyle === 'italic' ? 'normal' : 'italic'; updateElement(selectedElementIdx!, { blocks: newBlocks }); }}><span style={{ fontStyle: 'italic' }}>I</span></Button>
+                      </div>
+                      <Label>Letter Spacing</Label>
+                      <Slider min={-2} max={10} step={0.5} value={[parseFloat(selectedElement.blocks[selectedBlockIdx].style?.letterSpacing || '0')]} onValueChange={([v]) => { const newBlocks = [...selectedElement.blocks]; newBlocks[selectedBlockIdx].style.letterSpacing = v + 'px'; updateElement(selectedElementIdx!, { blocks: newBlocks }); }} />
+                      <Label>Line Spacing</Label>
+                      <Slider min={1} max={2.5} step={0.05} value={[parseFloat(selectedElement.blocks[selectedBlockIdx].style?.lineHeight || '1.2')]} onValueChange={([v]) => { const newBlocks = [...selectedElement.blocks]; newBlocks[selectedBlockIdx].style.lineHeight = v.toString(); updateElement(selectedElementIdx!, { blocks: newBlocks }); }} />
+                    </>
+                  )}
+                  <Button variant="destructive" className="w-full" onClick={() => { removeElement(selectedElementIdx!); setSelectedElementIdx(null); setSelectedBlockIdx(null); }}>Delete This Overlay</Button>
                 </div>
               ) : (
                 <div className="text-muted-foreground text-sm">Click a text card in preview or list to edit or delete.</div>
+              )}
+              {pages[selectedPageIdx] && (
+                <div className="space-y-4 mb-6">
+                  <Label>CTA Button Text</Label>
+                  <Input value={pages[selectedPageIdx].cta?.text || ""} onChange={e => setPages(pages.map((p, i) => i === selectedPageIdx ? { ...p, cta: { ...p.cta, text: e.target.value } } : p))} placeholder="e.g. Read More" />
+                  <Label>CTA Link/URL</Label>
+                  <Input value={pages[selectedPageIdx].cta?.url || ""} onChange={e => setPages(pages.map((p, i) => i === selectedPageIdx ? { ...p, cta: { ...p.cta, url: e.target.value } } : p))} placeholder="https://..." />
+                  <Label>Button Color</Label>
+                  <input type="color" value={pages[selectedPageIdx].cta?.bgColor || "#e11d48"} onChange={e => setPages(pages.map((p, i) => i === selectedPageIdx ? { ...p, cta: { ...p.cta, bgColor: e.target.value } } : p))} />
+                  <Label>Text Color</Label>
+                  <input type="color" value={pages[selectedPageIdx].cta?.textColor || "#fff"} onChange={e => setPages(pages.map((p, i) => i === selectedPageIdx ? { ...p, cta: { ...p.cta, textColor: e.target.value } } : p))} />
+                  {/* Preview CTA button */}
+                  {pages[selectedPageIdx].cta?.text && pages[selectedPageIdx].cta?.url && (
+                    <div className="flex justify-center mt-2">
+                      <a
+                        href={pages[selectedPageIdx].cta.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: pages[selectedPageIdx].cta.bgColor,
+                          color: pages[selectedPageIdx].cta.textColor,
+                          borderRadius: '999px',
+                          padding: '0.75em 2em',
+                          fontWeight: 700,
+                          fontSize: '1.1em',
+                          textDecoration: 'none',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                          marginTop: 8,
+                          display: 'inline-block',
+                        }}
+                      >
+                        {pages[selectedPageIdx].cta.text}
+                      </a>
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -464,6 +631,19 @@ const StoryEditor = () => {
             <Button key={idx} size="icon" variant={idx === selectedPageIdx ? "default" : "ghost"} onClick={() => { selectPage(idx); setSelectedElementIdx(null); }}>{idx + 1}</Button>
           ))}
         </div>
+      </div>
+
+      {/* At the bottom of the editor, add status select and draft/publish buttons */}
+      <div className="w-full flex flex-col md:flex-row items-center justify-center gap-4 mt-8">
+        <div className="flex items-center gap-2">
+          <Label>Status</Label>
+          <select className="border rounded px-2 py-1" value={meta.status} onChange={e => setMeta({ ...meta, status: e.target.value })}>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
+        <Button variant="outline" onClick={(e) => handleSubmit(e, 'draft')}>Save as Draft</Button>
+        <Button variant="default" onClick={(e) => handleSubmit(e, 'published')}>Publish</Button>
       </div>
     </AdminLayout>
   );

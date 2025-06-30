@@ -10,6 +10,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
+import { supabase } from "@/lib/supabase";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");

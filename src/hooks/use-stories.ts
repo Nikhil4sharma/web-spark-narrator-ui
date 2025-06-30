@@ -25,6 +25,16 @@ export const useStory = (slug: string) => {
   });
 };
 
+// Custom hook for fetching a single story by id
+export const useStoryById = (id: string) => {
+  return useQuery({
+    queryKey: ['storyById', id],
+    queryFn: () => apiService.getStoryById(id),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 // Custom hook for creating a story
 export const useCreateStory = () => {
   const queryClient = useQueryClient();

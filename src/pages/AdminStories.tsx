@@ -26,7 +26,7 @@ const AdminStories = () => {
   const handleDelete = async (storyId: string) => {
     if (!window.confirm("Are you sure you want to delete this story?")) return;
     try {
-      const { error } = await supabase.from("web_stories").delete().eq("id", storyId);
+      const { error } = await supabase.from("stories").delete().eq("id", storyId);
       if (error) throw error;
       toast.success("Story deleted successfully!");
     } catch (err) {

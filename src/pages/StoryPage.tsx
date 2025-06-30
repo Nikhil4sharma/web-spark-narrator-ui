@@ -10,6 +10,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { RelatedStories } from "@/components/related-stories";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/lib/supabase";
 
 const StoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -152,37 +154,15 @@ const StoryPage = () => {
             {/* Story Content */}
             <Card className="mb-8">
               <CardContent className="p-8">
-                <div className="prose prose-lg max-w-none dark:prose-invert">
-                  {/* Convert markdown-like content to HTML */}
-                  {story.content.split('\n').map((paragraph, index) => {
-                    if (paragraph.trim() === '') return <br key={index} />;
-                    
-                    // Simple markdown parsing
-                    let processedParagraph = paragraph;
-                    
-                    // Bold text
-                    processedParagraph = processedParagraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                    
-                    // Italic text
-                    processedParagraph = processedParagraph.replace(/\*(.*?)\*/g, '<em>$1</em>');
-                    
-                    // Links
-                    processedParagraph = processedParagraph.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">$1</a>');
-                    
-                    // Headers
-                    if (paragraph.startsWith('## ')) {
-                      return <h2 key={index} className="text-2xl font-bold mt-8 mb-4">{paragraph.substring(3)}</h2>;
-                    }
-                    if (paragraph.startsWith('# ')) {
-                      return <h1 key={index} className="text-3xl font-bold mt-8 mb-4">{paragraph.substring(2)}</h1>;
-                    }
-                    
-                    return (
-                      <p key={index} className="mb-4 leading-relaxed" 
-                         dangerouslySetInnerHTML={{ __html: processedParagraph }} />
-                    );
-                  })}
-                </div>
+                {(() => {
+                  try {
+                    const pages = story.content ? JSON.parse(story.content) : null;
+                    if (!pages) return <div className="text-center text-muted-foreground">No story content.</div>;
+                    return <StoryMobilePreview pages={pages} meta={story} />;
+                  } catch {
+                    return <div className="text-center text-red-500">Invalid story content.</div>;
+                  }
+                })()}
               </CardContent>
             </Card>
 
@@ -235,6 +215,251 @@ const StoryPage = () => {
         </div>
       </main>
       <Footer />
+    </div>
+  );
+};
+
+// Update StoryMobilePreview to show Google AdSense ad after every 2 pages
+const StoryMobilePreview = ({ pages, meta }: { pages: any[]; meta: any }) => {
+  const [selectedPageIdx, setSelectedPageIdx] = useState(0);
+  const [adsensePublisherId, setAdsensePublisherId] = useState('ca-pub-4243233824220806');
+  const [adsenseSlotId, setAdsenseSlotId] = useState('YOUR_SLOT_ID');
+  const adRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [textFadeKey, setTextFadeKey] = useState(0);
+  useEffect(() => {
+    setIsMobile(window.innerWidth <= 600);
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('settings').select('adsense_publisher_id,adsense_slot_id').limit(1).single();
+      if (data) {
+        if (data.adsense_publisher_id) setAdsensePublisherId(data.adsense_publisher_id);
+        if (data.adsense_slot_id) setAdsenseSlotId(data.adsense_slot_id);
+      }
+    })();
+  }, []);
+  useEffect(() => {
+    if (adRef.current) {
+      const ads = adRef.current.querySelectorAll('.adsbygoogle');
+      ads.forEach(ad => {
+        try {
+          // @ts-ignore
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {}
+      });
+    }
+  }, [selectedPageIdx, adsensePublisherId, adsenseSlotId]);
+  useEffect(() => {
+    const ref = containerRef.current;
+    if (!ref) return;
+    let startX = 0;
+    let endX = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+    };
+    const handleTouchEnd = (e: TouchEvent) => {
+      endX = e.changedTouches[0].clientX;
+      if (endX - startX > 50 && selectedPageIdx > 0) {
+        setSelectedPageIdx(selectedPageIdx - 1);
+      } else if (startX - endX > 50 && selectedPageIdx < pages.length - 1) {
+        setSelectedPageIdx(selectedPageIdx + 1);
+      }
+    };
+    ref.addEventListener('touchstart', handleTouchStart, { passive: true });
+    ref.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      ref.removeEventListener('touchstart', handleTouchStart);
+      ref.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [selectedPageIdx, pages.length]);
+  useEffect(() => {
+    setTextFadeKey(prev => prev + 1);
+  }, [selectedPageIdx]);
+  // Click navigation (desktop)
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const bounds = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - bounds.left;
+    if (x < bounds.width / 2 && selectedPageIdx > 0) {
+      setSelectedPageIdx(selectedPageIdx - 1);
+    } else if (x >= bounds.width / 2 && selectedPageIdx < pages.length - 1) {
+      setSelectedPageIdx(selectedPageIdx + 1);
+    }
+  };
+  if (!pages || !pages.length) return <div className="text-center text-muted-foreground">No story content.</div>;
+  const page = pages[selectedPageIdx];
+  const showAd = (idx: number) => (idx + 1) % 2 === 0 && idx < pages.length - 1;
+  // Responsive style
+  const containerClass = isMobile
+    ? 'fixed inset-0 w-screen h-screen bg-black z-50 flex flex-col items-center justify-center overflow-hidden'
+    : 'relative w-[320px] h-[570px] mx-auto bg-gradient-to-br from-white/80 to-gray-100/80 rounded-3xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col items-center justify-center';
+  useEffect(() => {
+    const img = document.querySelector('.story-bg-zoom');
+    if (img) {
+      img.animate([
+        { transform: 'scale(1)' },
+        { transform: 'scale(1.08)' }
+      ], {
+        duration: 3000,
+        fill: 'forwards',
+        easing: 'cubic-bezier(0.4,0,0.2,1)'
+      });
+    }
+  }, [selectedPageIdx]);
+  return (
+    <div
+      ref={containerRef}
+      className={containerClass}
+      onClick={handleClick}
+      style={{ touchAction: 'pan-y', WebkitTapHighlightColor: 'transparent' }}
+    >
+      {/* Progress Bar */}
+      <div className={isMobile ? 'flex gap-1 w-full z-30' : 'absolute w-full flex gap-1 z-30'} style={{ top: 16, left: 0, position: 'absolute', margin: 0, padding: 0 }}>
+        {pages.map((_, idx) => (
+          <div key={idx} className={`flex-1 h-1 rounded-full transition-all duration-300 ${idx <= selectedPageIdx ? 'bg-white' : 'bg-gray-400/50'}`}></div>
+        ))}
+      </div>
+      {/* Publisher logo + title */}
+      {meta?.publisherLogo && (
+        <div className={isMobile ? 'absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center z-20' : 'absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center z-20'}>
+          <img src={meta.publisherLogo} alt="Publisher Logo" className="w-12 h-12 object-contain rounded-full bg-white/90 shadow" />
+          <div className="text-center mt-1">
+            <span className="block text-lg font-bold text-red-600 leading-none">Aaj ki</span>
+            <span className="block text-base font-semibold text-neutral-900 leading-none">Story</span>
+          </div>
+        </div>
+      )}
+      {/* Background */}
+      {page.backgroundType === 'image' && page.backgroundUrl && (
+        <img
+          src={page.backgroundUrl}
+          alt={page.backgroundAlt || 'story background'}
+          className="absolute inset-0 w-full h-full object-cover z-0 story-bg-zoom"
+          style={{ objectFit: 'cover', objectPosition: 'center', transition: 'transform 3s cubic-bezier(0.4,0,0.2,1)', transform: 'scale(1.08)' }}
+          key={selectedPageIdx}
+        />
+      )}
+      {page.backgroundType === 'video' && page.backgroundUrl && (
+        <video src={page.backgroundUrl} className="absolute inset-0 w-full h-full object-cover z-0" autoPlay loop muted playsInline aria-label={page.backgroundAlt || 'story background video'} />
+      )}
+      {/* Text Card (bottom) */}
+      {page.elements.map((el: any) => {
+        if (el.type === 'text') {
+          return (
+            <div
+              key={el.id + '-' + textFadeKey}
+              className="fade-in-text-card"
+              style={{
+                position: 'absolute',
+                left: 0,
+                bottom: 0,
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                zIndex: 3,
+              }}
+            >
+              <div style={{
+                width: '100%',
+                background: 'rgba(0,0,0,0.10)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                borderTopLeftRadius: '2rem',
+                borderTopRightRadius: '2rem',
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
+                padding: '1.25rem 1.5rem',
+                boxShadow: '0 8px 32px 0 rgba(0,0,0,0.18)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '3.5rem',
+                height: 'auto',
+              }}>
+                {el.blocks.map((block: any) => {
+                  const Tag = block.tag;
+                  return (
+                    <Tag
+                      key={block.id}
+                      style={{
+                        textAlign: block.style?.align || 'center',
+                        color: block.style?.color || '#fff',
+                        fontWeight: block.style?.fontWeight || 'bold',
+                        fontStyle: block.style?.fontStyle || 'normal',
+                        fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+                        fontSize: block.style?.fontSize || (block.tag === 'h1' ? '2em' : block.tag === 'h2' ? '1.5em' : block.tag === 'h3' ? '1.2em' : '1em'),
+                        letterSpacing: block.style?.letterSpacing || '0px',
+                        lineHeight: block.style?.lineHeight || '1.2',
+                        margin: 0,
+                        padding: 0,
+                        textShadow: '0 2px 8px #0008',
+                      }}
+                    >
+                      {block.value}
+                    </Tag>
+                  );
+                })}
+                {/* Image Credit (optional) */}
+                {page.backgroundCredit && (
+                  <div className="text-xs mt-2 opacity-80">Image Credit: {page.backgroundCredit}</div>
+                )}
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })}
+      {/* Google AdSense ad after every 2 pages */}
+      {showAd(selectedPageIdx) && (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30">
+          <ins className="adsbygoogle"
+            style={{ display: 'block', width: 300, height: 250 }}
+            data-ad-client={adsensePublisherId}
+            data-ad-slot={adsenseSlotId}
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+        </div>
+      )}
+      {/* After the text card, render CTA button if present */}
+      {page.cta && page.cta.text && page.cta.url && (
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          bottom: '80px', // above text card
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          zIndex: 4,
+          pointerEvents: 'auto',
+        }}>
+          <a
+            href={page.cta.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: page.cta.bgColor || '#e11d48',
+              color: page.cta.textColor || '#fff',
+              borderRadius: '999px',
+              padding: '0.75em 2em',
+              fontWeight: 700,
+              fontSize: '1.1em',
+              textDecoration: 'none',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              marginTop: 8,
+              display: 'inline-block',
+              pointerEvents: 'auto',
+            }}
+          >
+            {page.cta.text}
+          </a>
+        </div>
+      )}
     </div>
   );
 };

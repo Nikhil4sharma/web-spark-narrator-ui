@@ -16,6 +16,12 @@ export interface Story {
   author: string;
   tags: string[];
   readingTime: number;
+  publisherName?: string;
+  publisherLogoAlt?: string;
+  posterAlt?: string;
+  publishDate?: string;
+  updateDate?: string;
+  canonicalUrl?: string;
 }
 
 export interface Category {
@@ -43,6 +49,12 @@ export interface CreateStoryRequest {
   coverImage: string;
   tags: string[];
   status: 'draft' | 'published';
+  publisherName?: string;
+  publisherLogoAlt?: string;
+  posterAlt?: string;
+  publishDate?: string;
+  updateDate?: string;
+  canonicalUrl?: string;
 }
 
 export interface UpdateStoryRequest extends Partial<CreateStoryRequest> {
@@ -67,6 +79,12 @@ class ApiService {
       author: row.author,
       tags: row.tags || [],
       readingTime: row.reading_time,
+      publisherName: row.publisher_name,
+      publisherLogoAlt: row.publisher_logo_alt,
+      posterAlt: row.poster_alt,
+      publishDate: row.publish_date,
+      updateDate: row.update_date,
+      canonicalUrl: row.canonical_url,
     };
   }
 
@@ -153,6 +171,12 @@ class ApiService {
         reading_time: Math.ceil(data.content.split(' ').length / 200),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        publisher_name: data.publisherName,
+        publisher_logo_alt: data.publisherLogoAlt,
+        poster_alt: data.posterAlt,
+        publish_date: data.publishDate,
+        update_date: data.updateDate,
+        canonical_url: data.canonicalUrl,
       };
 
       const { data: result, error } = await supabase
@@ -183,6 +207,12 @@ class ApiService {
       if (data.status) updateData.status = data.status;
       if (data.tags) updateData.tags = data.tags;
       if (data.content) updateData.reading_time = Math.ceil(data.content.split(' ').length / 200);
+      if (data.publisherName) updateData.publisher_name = data.publisherName;
+      if (data.publisherLogoAlt) updateData.publisher_logo_alt = data.publisherLogoAlt;
+      if (data.posterAlt) updateData.poster_alt = data.posterAlt;
+      if (data.publishDate) updateData.publish_date = data.publishDate;
+      if (data.updateDate) updateData.update_date = data.updateDate;
+      if (data.canonicalUrl) updateData.canonical_url = data.canonicalUrl;
 
       const { data: result, error } = await supabase
         .from('stories')

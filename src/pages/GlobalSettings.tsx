@@ -40,6 +40,8 @@ const defaultSettings = {
   smtp_user: "",
   smtp_password: "",
   enable_email_notifications: false,
+  adsense_publisher_id: "",
+  adsense_slot_id: "",
 };
 
 const GlobalSettings = () => {
@@ -398,6 +400,36 @@ const GlobalSettings = () => {
                       value={settings.google_analytics_id}
                       onChange={(e) => setSettings({ ...settings, google_analytics_id: e.target.value })}
                       placeholder="G-XXXXXXXXXX"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Monetization */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Globe className="w-5 h-5 mr-2" />
+                    Monetization
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="adsense_publisher_id">Google AdSense Publisher ID</Label>
+                    <Input
+                      id="adsense_publisher_id"
+                      value={settings.adsense_publisher_id || ""}
+                      onChange={(e) => setSettings({ ...settings, adsense_publisher_id: e.target.value })}
+                      placeholder="ca-pub-xxxxxxxxxxxxxxxx"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="adsense_slot_id">Google AdSense Slot ID</Label>
+                    <Input
+                      id="adsense_slot_id"
+                      value={settings.adsense_slot_id || ""}
+                      onChange={(e) => setSettings({ ...settings, adsense_slot_id: e.target.value })}
+                      placeholder="1234567890"
                     />
                   </div>
                 </CardContent>
