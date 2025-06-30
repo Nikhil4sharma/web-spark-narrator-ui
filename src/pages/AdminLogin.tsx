@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import Footer from "@/components/footer";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -180,6 +181,7 @@ const AdminLogin = () => {
           </Button>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

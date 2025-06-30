@@ -8,6 +8,7 @@ import { ArrowLeft, Eye, Clock, User, Calendar, Tag, Share2, Heart, MessageCircl
 import { useStory } from "@/hooks/use-stories";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RelatedStories } from "@/components/related-stories";
+import Footer from "@/components/footer";
 
 const StoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -246,6 +247,7 @@ const StoryPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

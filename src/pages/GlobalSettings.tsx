@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Save, Globe, Mail, Shield, Palette, Loader2, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import Footer from "@/components/footer";
 
 const GlobalSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -481,6 +482,7 @@ const GlobalSettings = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </AdminLayout>
   );
 };

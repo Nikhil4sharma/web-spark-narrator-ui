@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useStories } from "@/hooks/use-stories";
 import { useCategories } from "@/hooks/use-categories";
 import { Skeleton } from "@/components/ui/skeleton";
+import Footer from "@/components/footer";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -194,17 +195,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t bg-card mt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-muted-foreground">
-            <p>&copy; 2024 WebStory Hub. Built with modern web technologies.</p>
-            <p className="text-sm mt-2">
-              Powered by React, TypeScript, and Tailwind CSS
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
+  <url>
+    <loc>https://yourwebsite.com/</loc>
+    <priority>1.0</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <!-- Example Story URL (replace with dynamic generation) -->
+  <url>
+    <loc>https://yourwebsite.com/stories/example-story</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <!-- Static Pages -->
+  <url><loc>https://yourwebsite.com/about</loc></url>
+  <url><loc>https://yourwebsite.com/contact</loc></url>
+  <url><loc>https://yourwebsite.com/disclaimer</loc></url>
+  <url><loc>https://yourwebsite.com/privacy-policy</loc></url>
+  <url><loc>https://yourwebsite.com/apply-for-job</loc></url>
+  <url><loc>https://yourwebsite.com/correction-policy</loc></url>
+  <url><loc>https://yourwebsite.com/dnpa-code-of-ethics</loc></url>
+  <url><loc>https://yourwebsite.com/fact-checking-policy</loc></url>
+  <!-- TODO: Dynamically add all story URLs and update lastmod -->
+</urlset> 

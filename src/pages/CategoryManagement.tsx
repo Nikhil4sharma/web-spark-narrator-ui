@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2, FileText, Calendar, Loader2 } from "lucide-react";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
 import { toast } from "@/hooks/use-toast";
 import { Category } from "@/lib/api";
+import Footer from "@/components/footer";
 
 const CategoryManagement = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -331,6 +332,7 @@ const CategoryManagement = () => {
           </DialogContent>
         </Dialog>
       </div>
+      <Footer />
     </AdminLayout>
   );
 };

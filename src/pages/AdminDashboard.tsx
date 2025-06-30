@@ -9,6 +9,7 @@ import { useDeleteStory } from "@/hooks/use-stories";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import Footer from "@/components/footer";
 
 const AdminDashboard = () => {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
@@ -248,6 +249,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </AdminLayout>
   );
 };
